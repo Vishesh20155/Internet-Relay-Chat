@@ -59,8 +59,6 @@ int main(int argc, char const *argv[])
     printf("Authentication failed!!\n");
     return 1;
   }
-
-  print_key("Session key @ CLIENT", msg2.session_key);
   
   printf("NS part 1 done\n");
 

@@ -23,7 +23,6 @@ void *kdc_functionality(void *socket)
   struct NS_msg_2 msg2;
   int retval;
 
-  print_key("User[0] key @ KDC", all_keys[0]);
 
   // Receive message 1 of NS authentication
   receive_data(sock, (void *)&msg1, sizeof(msg1));
@@ -33,7 +32,6 @@ void *kdc_functionality(void *socket)
   unsigned char session_key[KEY_LEN];
   memset(session_key, '\0', KEY_LEN);
   generate_session_key(session_key);
-  print_key("Session key @ KDC", session_key);
 
   // Send message 2 of NS authentication
   msg2.nonce = msg1.nonce;
@@ -52,8 +50,6 @@ void *kdc_functionality(void *socket)
   char ciphertext[BUFFER_SIZE];
   memset(ciphertext, '\0', BUFFER_SIZE);
   int encryption_len = encrypt_data((unsigned char *)&msg2, sizeof(msg2), random_key, NULL, ciphertext);
-
-  printf("Length received in KDC server: %d\n", encryption_len);
 
   // Send encrypted data
   send_data(sock, (void *)ciphertext, encryption_len);
