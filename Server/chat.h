@@ -19,9 +19,9 @@ void *chat_functionality(void *socket)
   strcpy(plaintext, "Hello Rahul Bhai. Mera code chal rha hai!!");
   
   printf("Server sending plain text (%ld): %s\n", strlen(plaintext), plaintext);
-  encrypt_data(plaintext, strlen(plaintext), random_key, NULL, ciphertext);
+  int encryption_len = encrypt_data(plaintext, strlen(plaintext), random_key, NULL, ciphertext);
 
-  send_data(sock, ciphertext, BUFFER_SIZE);
+  send_data(sock, ciphertext, encryption_len);
 
   // Receive message 5 of NS authentication
 

@@ -19,7 +19,7 @@
 #define KDC_SERVER 1
 #define CHAT_SERVER 2
 #define SERVER_IP "127.0.0.1"
-#define BUFFER_SIZE 512
+#define BUFFER_SIZE 1024
 #define UNAME_LEN 128
 #define KEY_LEN 256
 #define ENCRYPTED_TEXT_LEN 512
@@ -159,7 +159,7 @@ void send_data(int sock_fd, void *data, size_t data_len)
   }
 }
 
-void receive_data(int sock_fd, void *data, size_t data_len)
+size_t receive_data(int sock_fd, void *data, size_t data_len)
 {
   int retval = recv(sock_fd, data, data_len, 0);
   if (retval < 0)
@@ -167,6 +167,8 @@ void receive_data(int sock_fd, void *data, size_t data_len)
     perror("Unable to receive data");
     exit(EXIT_FAILURE);
   }
+
+  return retval;
 }
 
 #endif // COMMON_H

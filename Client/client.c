@@ -56,6 +56,8 @@ int main(int argc, char const *argv[])
     exit(EXIT_FAILURE);
   }
 
+  printf("\n----------------\n\n");
+
   // Connect to Chat server
   int chat_sock = connect_server(chat_server);
 
@@ -67,11 +69,11 @@ int main(int argc, char const *argv[])
   memset(ciphertext, '\0', BUFFER_SIZE);
   memset(plaintext, '\0', BUFFER_SIZE);
 
-  receive_data(chat_sock, ciphertext, BUFFER_SIZE);
+  int recv_len = receive_data(chat_sock, ciphertext, BUFFER_SIZE);
 
-  decrypt_data(ciphertext, strlen(ciphertext), random_key, NULL, plaintext);
+  decrypt_data(ciphertext, recv_len, random_key, NULL, plaintext);
 
-  printf("Decrypted Response (%ld): %s\n", strlen(plaintext), plaintext);
+  printf("Decrypted Response from Chat: %s\n", plaintext);
 
   // Show the menu
 
