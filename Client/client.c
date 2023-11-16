@@ -45,7 +45,13 @@ int main(int argc, char const *argv[])
   int kdc_sock = connect_server(kdc_server);
 
   // Authenticate NS part 1
-  ns_part_1(kdc_sock);
+  struct NS_msg_2 msg2;
+  bool isAuthenticated = ns_part_1(kdc_sock, &msg2);
+  if(!isAuthenticated) {
+    printf("Authentication failed!!\n");
+    return 1;
+  }
+  
   printf("NS part 1 done\n");
 
   // Close KDC connection

@@ -20,9 +20,10 @@
 #define CHAT_SERVER 2
 #define SERVER_IP "127.0.0.1"
 #define BUFFER_SIZE 1024
-#define UNAME_LEN 128
+#define UNAME_LEN 32
 #define KEY_LEN 128
 #define ENCRYPTED_TEXT_LEN 256
+#define SESSION_KEY_LEN 32
 
 unsigned char *random_key = (unsigned char *)"01234567890123456789012345678901";
 
@@ -41,14 +42,14 @@ struct NS_msg_1
 
 struct ticket
 {
-  char session_key[KEY_LEN];
+  unsigned char session_key[KEY_LEN];
   char uname[UNAME_LEN];
 };
 
 struct NS_msg_2
 {
   int nonce;
-  char session_key[KEY_LEN];
+  unsigned char session_key[KEY_LEN];
   unsigned char encrypted_t[ENCRYPTED_TEXT_LEN];
 };
 
