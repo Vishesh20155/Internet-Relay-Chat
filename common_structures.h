@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <stdbool.h>
 
 #define KDC_PORT 8888
 #define CHAT_PORT 9999
@@ -15,8 +16,9 @@
 #define CHAT_SERVER 2
 #define SERVER_IP "127.0.0.1"
 #define BUFFER_SIZE 512
-
 #define UNAME_LEN 128
+#define KEY_LEN 256
+#define ENCRYPTED_TEXT_LEN 512
 
 struct server_args
 {
@@ -35,13 +37,19 @@ struct ticket {
   char *uname;
 };
 
+struct NS_msg_2 {
+  int nonce;
+  char session_key[KEY_LEN];
+  unsigned char t[ENCRYPTED_TEXT_LEN];
+};
+
 int generate_nonce() {
   // TODO: Complete this function to get a random integer
   return 5;
 }
 
 void encrypt_data(char *plaintext, char *key, char *ciphertext) {
-
+  
 }
 
 void decrypt_data(char *ciphertext, char *key, char *plaintext) {

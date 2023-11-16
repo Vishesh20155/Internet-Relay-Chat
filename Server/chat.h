@@ -3,11 +3,12 @@
 void *chat_functionality(void *socket)
 {
   int sock = *(int *)socket;
-  char buffer[BUFFER_SIZE] = {0};
+  char buffer[BUFFER_SIZE];
+  memset(buffer, '\0', BUFFER_SIZE);
   int retval;
 
   // Receive message 1 of NS authentication
-  receive_data(sock, buffer, BUFFER_SIZE);
+  receive_data(sock, (void *)buffer, BUFFER_SIZE);
   printf("Data Received on Chat Server: %s\n", buffer);
 
   // Send message 2 of NS authentication

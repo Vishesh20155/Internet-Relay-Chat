@@ -1,10 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
-#include "../common_structures.h"
+
+#include "ns_auth.h"
 
 int connect_server(struct server_args s_opts) {
   int sock = 0, valread, server_port;
@@ -49,11 +45,8 @@ int main(int argc, char const *argv[])
   int kdc_sock = connect_server(kdc_server);
 
   // Authenticate NS part 1
-  send_data(kdc_sock, message, strlen(message));
-  printf("Message sent\n");
-
-  receive_data(kdc_sock, buffer, BUFFER_SIZE);
-  printf("Response: %s\n", buffer);
+  ns_part_1(kdc_sock);
+  printf("NS part 1 done\n");
 
   // Close KDC connection
   retval = close(kdc_sock);
@@ -62,7 +55,6 @@ int main(int argc, char const *argv[])
     exit(EXIT_FAILURE);
   }
 
-  
   // Connect to Chat server
   int chat_sock = connect_server(chat_server);
   
