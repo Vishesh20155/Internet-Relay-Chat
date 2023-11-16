@@ -14,7 +14,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
-#define NUM_USERS 1
+#define NUM_USERS 2
 #define KDC_PORT 12345
 #define CHAT_PORT 54321
 #define KDC_SERVER 1
@@ -24,7 +24,7 @@
 #define UNAME_LEN 32
 #define PASSWORD_LEN 32
 #define KEY_LEN 128
-#define ENCRYPTED_TEXT_LEN 256
+#define ENCRYPTED_TICKET_LEN 128
 #define SESSION_KEY_LEN 32
 #define LONG_TERM_KEY_LEN 32
 
@@ -45,15 +45,16 @@ struct NS_msg_1
 
 struct ticket
 {
-  unsigned char session_key[KEY_LEN];
+  unsigned char session_key[SESSION_KEY_LEN];
   char uname[UNAME_LEN];
 };
 
 struct NS_msg_2
 {
   int nonce;
-  unsigned char session_key[KEY_LEN];
-  unsigned char encrypted_t[ENCRYPTED_TEXT_LEN];
+  unsigned char session_key[SESSION_KEY_LEN];
+  int encrypted_t_len;
+  unsigned char encrypted_t[ENCRYPTED_TICKET_LEN];
 };
 
 int generate_nonce()
@@ -175,9 +176,9 @@ size_t receive_data(int sock_fd, void *data, size_t data_len)
   return retval;
 }
 
-void print_key(char *prefix, unsigned char *key) {
+void print_byte_data(char *prefix, unsigned char *key, int data_len) {
   printf("%s: ", prefix);
-  for(int i=0; i<SESSION_KEY_LEN; ++i) {
+  for(int i=0; i<data_len; ++i) {
     printf("%02x", key[i]);
   }
   printf("\n");

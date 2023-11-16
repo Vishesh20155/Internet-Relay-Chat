@@ -38,13 +38,14 @@ void *kdc_functionality(void *socket)
   strcpy(msg2.session_key, session_key);
 
   // Create a ticket here and encrypt it using Server's long term key
-  // struct ticket t1;
-  // strcpy(t1.session_key, session_key);
-  // strcpy(t1.uname, msg1.uname);
-  // unsigned cipherticket[ENCRYPTED_TEXT_LEN];
-  // int encrypted_ticket_len = encrypt_data((unsigned char *)&t1, sizeof(struct ticket), chat_server_key, NULL, cipherticket);
-  // strcpy(msg2.encrypted_t, cipherticket);
-  strcpy(msg2.encrypted_t, "Encrypted Ticket!");
+  struct ticket t1;
+  strcpy(t1.session_key, session_key);
+  strcpy(t1.uname, msg1.uname);
+
+  int encrypted_ticket_len = encrypt_data((unsigned char *)&t1, sizeof(struct ticket), all_keys[0], NULL, msg2.encrypted_t);
+  print_byte_data("\t** Encrypted Ticket", msg2.encrypted_t, encrypted_ticket_len);
+  msg2.encrypted_t_len = encrypted_ticket_len;
+  // strcpy(msg2.encrypted_t, "Encrypted Ticket!");
 
   // Encrypt with K(ab) and K(bs)
   char ciphertext[BUFFER_SIZE];

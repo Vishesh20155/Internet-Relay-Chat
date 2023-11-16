@@ -13,7 +13,9 @@ bool ns_part_1(int sock, struct NS_msg_2 *msg2) {
 
   // Decrypt message 2:
   decrypt_data(ciphertext, recv_len, random_key, NULL, (unsigned char *)msg2);
-  printf("Received: %d | %s | %s\n", msg2->nonce, msg2->session_key, msg2->encrypted_t);
+  printf("\tReceived Nonce: %d, encrypted ticket length: %d\n", msg2->nonce, msg2->encrypted_t_len);
+  print_byte_data("\tReceived Session Key", msg2->session_key, SESSION_KEY_LEN);
+  print_byte_data("\tReceived Encrypted ticket", msg2->encrypted_t, msg2->encrypted_t_len);
 
   // TODO: return false in case decryption fails
   return true;

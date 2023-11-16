@@ -3,8 +3,8 @@
 
 #include "../common_structures.h"
 
-char all_usernames[NUM_USERS][UNAME_LEN] = {"vishesh"};
-char all_passwords[NUM_USERS][PASSWORD_LEN] = {"vishesh"};
+char all_usernames[NUM_USERS][UNAME_LEN] = {"chat server", "vishesh"};
+char all_passwords[NUM_USERS][PASSWORD_LEN] = {"chat server", "vishesh"};
 unsigned char all_keys[NUM_USERS][SESSION_KEY_LEN];
 
 void derive_all_keys()
