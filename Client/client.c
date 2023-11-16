@@ -41,6 +41,14 @@ int main(int argc, char const *argv[])
 
   struct server_args kdc_server = {KDC_PORT, KDC_SERVER}, chat_server = {CHAT_PORT, CHAT_SERVER};
 
+  char username[UNAME_LEN], password[PASSWORD_LEN];
+  
+  printf("Username: ");
+  scanf("%s", username);
+
+  printf("Password: ");
+  scanf("%s", password);
+
   // Connect to KDC server
   int kdc_sock = connect_server(kdc_server);
 
@@ -51,6 +59,8 @@ int main(int argc, char const *argv[])
     printf("Authentication failed!!\n");
     return 1;
   }
+
+  print_key("Session key @ CLIENT", msg2.session_key);
   
   printf("NS part 1 done\n");
 

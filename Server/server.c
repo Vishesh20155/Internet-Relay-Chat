@@ -3,6 +3,7 @@
 int main()
 {
   int retval;
+  
   pthread_t kdc_thread, chat_thread;
 
   // Struct to hold arguents to be sent into each thread:
@@ -13,6 +14,8 @@ int main()
 
   chat_args.port = CHAT_PORT;
   chat_args.server_type = CHAT_SERVER;
+
+  derive_all_keys();
 
   // Starting the 2 servers on 2 separate threads:
   retval = pthread_create(&kdc_thread, NULL, start_server, (void *)&kdc_args);

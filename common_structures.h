@@ -14,16 +14,19 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
-#define KDC_PORT 8888
-#define CHAT_PORT 9999
+#define NUM_USERS 1
+#define KDC_PORT 12345
+#define CHAT_PORT 54321
 #define KDC_SERVER 1
 #define CHAT_SERVER 2
 #define SERVER_IP "127.0.0.1"
 #define BUFFER_SIZE 1024
 #define UNAME_LEN 32
+#define PASSWORD_LEN 32
 #define KEY_LEN 128
 #define ENCRYPTED_TEXT_LEN 256
 #define SESSION_KEY_LEN 32
+#define LONG_TERM_KEY_LEN 32
 
 unsigned char *random_key = (unsigned char *)"01234567890123456789012345678901";
 
@@ -56,7 +59,7 @@ struct NS_msg_2
 int generate_nonce()
 {
   // TODO: Complete this function to get a random integer
-  return 5;
+  return 151;
 }
 
 int encrypt_data(unsigned char *plaintext, int plaintext_len, unsigned char *key,
@@ -170,6 +173,23 @@ size_t receive_data(int sock_fd, void *data, size_t data_len)
   }
 
   return retval;
+}
+
+void print_key(char *prefix, unsigned char *key) {
+  printf("%s: ", prefix);
+  for(int i=0; i<SESSION_KEY_LEN; ++i) {
+    printf("%02x", key[i]);
+  }
+  printf("\n");
+}
+
+void password_to_key(char *password, unsigned char *key)
+{
+  if (PKCS5_PBKDF2_HMAC(password, strlen(password), "RandomSalt", 10, 5, EVP_sha256(), LONG_TERM_KEY_LEN/2, key) != 1)
+  {
+    fprintf(stderr, "Error deriving key using PBKDF2\n");
+    return;
+  }
 }
 
 #endif // COMMON_H

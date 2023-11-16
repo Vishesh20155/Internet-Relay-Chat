@@ -1,3 +1,6 @@
+#ifndef COMMON_H3
+#define COMMON_H3
+
 #include <pthread.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -69,3 +72,5 @@ void *start_server(void *thread_args)
 
   close(server_fd);
 }
+
+#endif

@@ -1,5 +1,9 @@
+#ifndef COMMON_H4
+#define COMMON_H4
+
 #include <openssl/rand.h>
 #include "../common_structures.h"
+#include "common_data.h"
 
 void generate_session_key(unsigned char *key)
 {
@@ -19,14 +23,17 @@ void *kdc_functionality(void *socket)
   struct NS_msg_2 msg2;
   int retval;
 
+  print_key("User[0] key @ KDC", all_keys[0]);
+
   // Receive message 1 of NS authentication
   receive_data(sock, (void *)&msg1, sizeof(msg1));
-  printf("Data Received on KDC Server: %s | %d\n", msg1.uname, msg1.nonce);
+  printf("**** Data Received on KDC Server: %s | %d\n", msg1.uname, msg1.nonce);
 
   // Generate the session key
   unsigned char session_key[KEY_LEN];
   memset(session_key, '\0', KEY_LEN);
   generate_session_key(session_key);
+  print_key("Session key @ KDC", session_key);
 
   // Send message 2 of NS authentication
   msg2.nonce = msg1.nonce;
@@ -60,3 +67,5 @@ void *kdc_functionality(void *socket)
 
   return NULL;
 }
+
+#endif

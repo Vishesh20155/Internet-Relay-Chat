@@ -1,3 +1,6 @@
+#ifndef COMMON_H1
+#define COMMON_H1
+
 #include "../common_structures.h"
 
 void *chat_functionality(void *socket)
@@ -9,7 +12,7 @@ void *chat_functionality(void *socket)
 
   // Receive message 3 of NS authentication
   receive_data(sock, (void *)buffer, BUFFER_SIZE);
-  printf("Data Received on Chat Server: %s\n", buffer);
+  printf("##### Data Received on Chat Server: %s\n", buffer);
 
   // Send message 4 of NS authentication
   char plaintext[BUFFER_SIZE], ciphertext[BUFFER_SIZE];
@@ -31,5 +34,9 @@ void *chat_functionality(void *socket)
     perror("Unable to close the socket");
     exit(EXIT_FAILURE);
   }
+
+  printf("-----------------\n");
   return NULL;
 }
+
+#endif
