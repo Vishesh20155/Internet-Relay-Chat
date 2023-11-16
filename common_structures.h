@@ -49,7 +49,7 @@ struct NS_msg_2
 {
   int nonce;
   char session_key[KEY_LEN];
-  unsigned char t[ENCRYPTED_TEXT_LEN];
+  unsigned char encrypted_t[ENCRYPTED_TEXT_LEN];
 };
 
 int generate_nonce()

@@ -14,8 +14,7 @@ void *kdc_functionality(void *socket)
   // Send message 2 of NS authentication
   msg2.nonce = msg1.nonce;
   strcpy(msg2.session_key, "Fake session key");
-  // msg2->t.uname = msg1.uname;
-  // strcpy(msg2->t.session_key, "1234567890");
+  strcpy(msg2.encrypted_t, "Encrypted Ticket!");
 
   // Encrypt with K(ab) and K(bs)
   char ciphertext[BUFFER_SIZE];

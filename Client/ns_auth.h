@@ -14,5 +14,5 @@ bool ns_part_1(int sock) {
 
   // Decrypt message 2:
   decrypt_data(ciphertext, recv_len, random_key, NULL, (unsigned char *)&msg2);
-  printf("Received: %d | %s\n", msg2.nonce, msg2.session_key);
+  printf("Received: %d | %s | %s\n", msg2.nonce, msg2.session_key, msg2.encrypted_t);
 }
