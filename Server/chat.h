@@ -18,7 +18,7 @@ void *chat_functionality(void *socket)
 
   strcpy(plaintext, "Hello Rahul Bhai. Mera code chal rha hai!!");
   
-  printf("Server sending plain text (%ld): %s\n", strlen(plaintext), plaintext);
+  printf("Chat Server sending plain text: %s\n", plaintext);
   int encryption_len = encrypt_data(plaintext, strlen(plaintext), random_key, NULL, ciphertext);
 
   send_data(sock, ciphertext, encryption_len);

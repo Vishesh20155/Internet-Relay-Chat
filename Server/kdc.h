@@ -22,7 +22,7 @@ void *kdc_functionality(void *socket)
   memset(ciphertext, '\0', BUFFER_SIZE);
   int encryption_len = encrypt_data((unsigned char *)&msg2, sizeof(msg2), random_key, NULL, ciphertext);
 
-  printf("Length of cipher text in KDC server: %d\n", encryption_len);
+  printf("Length received in KDC server: %d\n", encryption_len);
 
   // Send encrypted data
   send_data(sock, (void *)ciphertext, encryption_len);

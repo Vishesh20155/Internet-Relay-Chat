@@ -3,7 +3,7 @@ CFLAGS = -pthread -lcrypto -lssl
 CLIENT_TARGET = client
 SERVER_TARGET = server
 
-all: $(CLIENT_TARGET) $(SERVER_TARGET)
+all: clean $(CLIENT_TARGET) $(SERVER_TARGET)
 
 $(CLIENT_TARGET): Client/client.c
 	$(CC) $< -o $@ $(CFLAGS)

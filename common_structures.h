@@ -21,8 +21,8 @@
 #define SERVER_IP "127.0.0.1"
 #define BUFFER_SIZE 1024
 #define UNAME_LEN 128
-#define KEY_LEN 256
-#define ENCRYPTED_TEXT_LEN 512
+#define KEY_LEN 128
+#define ENCRYPTED_TEXT_LEN 256
 
 unsigned char *random_key = (unsigned char *)"01234567890123456789012345678901";
 
@@ -41,8 +41,8 @@ struct NS_msg_1
 
 struct ticket
 {
-  char *session_key;
-  char *uname;
+  char session_key[KEY_LEN];
+  char uname[UNAME_LEN];
 };
 
 struct NS_msg_2

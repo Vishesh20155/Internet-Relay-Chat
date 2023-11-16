@@ -73,7 +73,7 @@ int main(int argc, char const *argv[])
 
   decrypt_data(ciphertext, recv_len, random_key, NULL, plaintext);
 
-  printf("Decrypted Response from Chat: %s\n", plaintext);
+  printf("Decrypted Response from Chat Server: %s\n", plaintext);
 
   // Show the menu
 
