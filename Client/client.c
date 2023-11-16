@@ -2,7 +2,8 @@
 
 #include "ns_auth.h"
 
-int connect_server(struct server_args s_opts) {
+int connect_server(struct server_args s_opts)
+{
   int sock = 0, valread, server_port;
   struct sockaddr_in serv_addr;
 
@@ -37,10 +38,9 @@ int main(int argc, char const *argv[])
 {
   int retval;
   char *message = "Hello from client";
-  char buffer[BUFFER_SIZE];
 
   struct server_args kdc_server = {KDC_PORT, KDC_SERVER}, chat_server = {CHAT_PORT, CHAT_SERVER};
-  
+
   // Connect to KDC server
   int kdc_sock = connect_server(kdc_server);
 
@@ -50,22 +50,28 @@ int main(int argc, char const *argv[])
 
   // Close KDC connection
   retval = close(kdc_sock);
-  if(retval < 0) {
+  if (retval < 0)
+  {
     perror("Unable to close KDC socket at Client");
     exit(EXIT_FAILURE);
   }
 
   // Connect to Chat server
   int chat_sock = connect_server(chat_server);
-  
+
   // Authenticate NS part 2 --> bool
   send_data(chat_sock, message, strlen(message));
   printf("Message sent\n");
 
-  memset(buffer, '\0', BUFFER_SIZE);
-  receive_data(chat_sock, buffer, BUFFER_SIZE);
-  printf("Response: %s\n", buffer);
+  char ciphertext[BUFFER_SIZE], plaintext[BUFFER_SIZE];
+  memset(ciphertext, '\0', BUFFER_SIZE);
+  memset(plaintext, '\0', BUFFER_SIZE);
 
+  receive_data(chat_sock, ciphertext, BUFFER_SIZE);
+
+  decrypt_data(ciphertext, strlen(ciphertext), random_key, NULL, plaintext);
+
+  printf("Decrypted Response (%ld): %s\n", strlen(plaintext), plaintext);
 
   // Show the menu
 
@@ -73,7 +79,8 @@ int main(int argc, char const *argv[])
 
   // Close chat socket
   retval = close(chat_sock);
-  if(retval < 0) {
+  if (retval < 0)
+  {
     perror("Unable to close Chat socket at Client");
     exit(EXIT_FAILURE);
   }
