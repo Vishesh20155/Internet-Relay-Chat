@@ -25,7 +25,6 @@ bool ns_part_1(int sock, struct NS_msg_2 *msg2, char *username) {
 
 bool ns_part_2(int sock, struct NS_msg_2 msg2) {
   // Send the encrypted ticket
-  print_byte_data("Sending Encrypted ticket", msg2.encrypted_t, msg2.encrypted_t_len);
   send_data(sock, msg2.encrypted_t, msg2.encrypted_t_len);
 
   // Send Encrypted Nonce2
