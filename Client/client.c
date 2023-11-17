@@ -54,7 +54,7 @@ int main(int argc, char const *argv[])
 
   // Authenticate NS part 1
   struct NS_msg_2 msg2;
-  bool isAuthenticated = ns_part_1(kdc_sock, &msg2);
+  bool isAuthenticated = ns_part_1(kdc_sock, &msg2, username);
   if(!isAuthenticated) {
     printf("Authentication failed!!\n");
     return 1;
@@ -76,18 +76,11 @@ int main(int argc, char const *argv[])
   int chat_sock = connect_server(chat_server);
 
   // Authenticate NS part 2 --> bool
-  send_data(chat_sock, message, strlen(message));
-  printf("Message sent\n");
-
-  char ciphertext[BUFFER_SIZE], plaintext[BUFFER_SIZE];
-  memset(ciphertext, '\0', BUFFER_SIZE);
-  memset(plaintext, '\0', BUFFER_SIZE);
-
-  int recv_len = receive_data(chat_sock, ciphertext, BUFFER_SIZE);
-
-  decrypt_data(ciphertext, recv_len, random_key, NULL, plaintext);
-
-  printf("Decrypted Response from Chat Server: %s\n", plaintext);
+  isAuthenticated = ns_part_2(chat_sock, msg2);
+  if(!isAuthenticated) {
+    printf("Authentication failed!!\n");
+    return 1;
+  }
 
   // Show the menu
 

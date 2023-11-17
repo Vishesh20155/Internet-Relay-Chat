@@ -23,7 +23,6 @@
 #define BUFFER_SIZE 1024
 #define UNAME_LEN 32
 #define PASSWORD_LEN 32
-#define KEY_LEN 128
 #define ENCRYPTED_TICKET_LEN 128
 #define SESSION_KEY_LEN 32
 #define LONG_TERM_KEY_LEN 32
@@ -45,7 +44,7 @@ struct NS_msg_1
 
 struct ticket
 {
-  unsigned char session_key[SESSION_KEY_LEN];
+  unsigned char session_key[SESSION_KEY_LEN+1];
   char uname[UNAME_LEN];
 };
 

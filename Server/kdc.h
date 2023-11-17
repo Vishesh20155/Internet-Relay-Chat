@@ -2,7 +2,6 @@
 #define COMMON_H4
 
 #include <openssl/rand.h>
-#include "../common_structures.h"
 #include "common_data.h"
 
 void generate_session_key(unsigned char *key)
@@ -29,8 +28,8 @@ void *kdc_functionality(void *socket)
   printf("**** Data Received on KDC Server: %s | %d\n", msg1.uname, msg1.nonce);
 
   // Generate the session key
-  unsigned char session_key[KEY_LEN];
-  memset(session_key, '\0', KEY_LEN);
+  unsigned char session_key[SESSION_KEY_LEN];
+  memset(session_key, '\0', SESSION_KEY_LEN);
   generate_session_key(session_key);
 
   // Send message 2 of NS authentication
@@ -42,7 +41,7 @@ void *kdc_functionality(void *socket)
   strcpy(t1.session_key, session_key);
   strcpy(t1.uname, msg1.uname);
 
-  int encrypted_ticket_len = encrypt_data((unsigned char *)&t1, sizeof(struct ticket), all_keys[0], NULL, msg2.encrypted_t);
+  int encrypted_ticket_len = encrypt_data((unsigned char *)&t1, sizeof(t1), all_keys[0], NULL, msg2.encrypted_t);
   print_byte_data("\t** Encrypted Ticket", msg2.encrypted_t, encrypted_ticket_len);
   msg2.encrypted_t_len = encrypted_ticket_len;
   // strcpy(msg2.encrypted_t, "Encrypted Ticket!");
