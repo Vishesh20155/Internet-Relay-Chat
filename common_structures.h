@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdbool.h>
+#include <time.h>
 
 // OpenSSL libcrypto includes
 #include <openssl/evp.h>
@@ -26,6 +27,7 @@
 #define ENCRYPTED_TICKET_LEN 128
 #define SESSION_KEY_LEN 32
 #define LONG_TERM_KEY_LEN 32
+#define NONCE_LEN 10
 
 unsigned char *random_key = (unsigned char *)"01234567890123456789012345678901";
 
@@ -44,7 +46,7 @@ struct NS_msg_1
 
 struct ticket
 {
-  unsigned char session_key[SESSION_KEY_LEN+1];
+  unsigned char session_key[SESSION_KEY_LEN + 1];
   char uname[UNAME_LEN];
 };
 
@@ -56,10 +58,15 @@ struct NS_msg_2
   unsigned char encrypted_t[ENCRYPTED_TICKET_LEN];
 };
 
+struct NS_msg_3
+{
+  int nonce2_resp, nonce3;
+};
+
 int generate_nonce()
 {
-  // TODO: Complete this function to get a random integer
-  return 151;
+  int randomNum = rand()%INT16_MAX;
+  return randomNum;
 }
 
 int encrypt_data(unsigned char *plaintext, int plaintext_len, unsigned char *key,
@@ -175,9 +182,11 @@ size_t receive_data(int sock_fd, void *data, size_t data_len)
   return retval;
 }
 
-void print_byte_data(char *prefix, unsigned char *key, int data_len) {
+void print_byte_data(char *prefix, unsigned char *key, int data_len)
+{
   printf("%s: ", prefix);
-  for(int i=0; i<data_len; ++i) {
+  for (int i = 0; i < data_len; ++i)
+  {
     printf("%02x", key[i]);
   }
   printf("\n");
@@ -185,7 +194,7 @@ void print_byte_data(char *prefix, unsigned char *key, int data_len) {
 
 void password_to_key(char *password, unsigned char *key)
 {
-  if (PKCS5_PBKDF2_HMAC(password, strlen(password), "RandomSalt", 10, 5, EVP_sha256(), LONG_TERM_KEY_LEN/2, key) != 1)
+  if (PKCS5_PBKDF2_HMAC(password, strlen(password), "RandomSalt", 10, 5, EVP_sha256(), LONG_TERM_KEY_LEN / 2, key) != 1)
   {
     fprintf(stderr, "Error deriving key using PBKDF2\n");
     return;
