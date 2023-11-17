@@ -15,7 +15,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
-#define NUM_USERS 2
+#define NUM_USERS 10
 #define KDC_PORT 12345
 #define CHAT_PORT 54321
 #define KDC_SERVER 1
@@ -28,6 +28,8 @@
 #define SESSION_KEY_LEN 32
 #define LONG_TERM_KEY_LEN 32
 #define NONCE_LEN 10
+#define CMD_LEN 100
+#define MAX_USERS 20
 
 unsigned char *random_key = (unsigned char *)"01234567890123456789012345678901";
 
@@ -61,6 +63,14 @@ struct NS_msg_2
 struct NS_msg_3
 {
   int nonce2_resp, nonce3;
+};
+
+struct user_details
+{
+  int user_id;
+  char username[UNAME_LEN];
+  char password[UNAME_LEN];
+  unsigned char key[SESSION_KEY_LEN];
 };
 
 int generate_nonce()

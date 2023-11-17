@@ -8,12 +8,13 @@ void *chat_functionality(void *socket)
   int sock = *(int *)socket;
 
   int retval;
+  srand(time(0));
 
   // Receive ticket
   char cipherticket[ENCRYPTED_TICKET_LEN];
   size_t recv_ticket_len = receive_data(sock, cipherticket, ENCRYPTED_TICKET_LEN);
   struct ticket t1;
-  decrypt_data(cipherticket, recv_ticket_len, all_keys[0], NULL, (unsigned char*)&t1);
+  decrypt_data(cipherticket, recv_ticket_len, all_users_details[0].key, NULL, (unsigned char*)&t1);
 
   printf("Decrypted ticket at CHAT server: %s\n", t1.uname);
   print_byte_data("Decrypted SESSION KEY at chat server", t1.session_key, SESSION_KEY_LEN);
@@ -56,6 +57,11 @@ void *chat_functionality(void *socket)
 
   int nonce3_resp = atoi(nonce3_resp_str);
   printf("Nonce 3 response received on Chat server: %d\n", nonce3_resp);
+
+  // TODO: handle the failure case:
+  if(nonce3-1 == nonce3_resp) {
+    printf("User %s authenticated to chat!!\n", t1.uname);
+  }
 
   retval = close(sock);
   if (retval < 0)

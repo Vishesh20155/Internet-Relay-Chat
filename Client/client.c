@@ -1,6 +1,7 @@
 #include <arpa/inet.h>
 
 #include "ns_auth.h"
+#include "features.h"
 
 int connect_server(struct server_args s_opts)
 {
@@ -49,6 +50,8 @@ int main(int argc, char const *argv[])
   printf("Password: ");
   scanf("%s", password);
 
+  srand(time(0));
+
   // Connect to KDC server
   int kdc_sock = connect_server(kdc_server);
 
@@ -82,7 +85,13 @@ int main(int argc, char const *argv[])
     return 1;
   }
 
+  printf("NS part 2 done\n");
+
+  printf("\n----------------\n");
+  printf("\n----------------\n\n");
+
   // Show the menu
+  input_command(chat_sock);
 
   // Other Business Logic
 

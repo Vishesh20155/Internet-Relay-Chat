@@ -41,7 +41,7 @@ void *kdc_functionality(void *socket)
   strcpy(t1.session_key, session_key);
   strcpy(t1.uname, msg1.uname);
 
-  int encrypted_ticket_len = encrypt_data((unsigned char *)&t1, sizeof(t1), all_keys[0], NULL, msg2.encrypted_t);
+  int encrypted_ticket_len = encrypt_data((unsigned char *)&t1, sizeof(t1), all_users_details[0].key, NULL, msg2.encrypted_t);
   print_byte_data("\t** Encrypted Ticket", msg2.encrypted_t, encrypted_ticket_len);
   msg2.encrypted_t_len = encrypted_ticket_len;
   // strcpy(msg2.encrypted_t, "Encrypted Ticket!");
