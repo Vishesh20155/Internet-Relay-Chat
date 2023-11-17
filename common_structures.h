@@ -29,7 +29,7 @@
 #define LONG_TERM_KEY_LEN 32
 #define NONCE_LEN 10
 #define CMD_LEN 100
-#define MAX_USERS 20
+#define MAX_LOGGED_IN_USERS 20
 
 unsigned char *random_key = (unsigned char *)"01234567890123456789012345678901";
 
@@ -71,6 +71,12 @@ struct user_details
   char username[UNAME_LEN];
   char password[UNAME_LEN];
   unsigned char key[SESSION_KEY_LEN];
+};
+
+struct logged_in_user_struct
+{
+  int user_id;
+  char username[UNAME_LEN];
 };
 
 int generate_nonce()
