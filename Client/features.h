@@ -84,6 +84,26 @@ void show_messages(int sock)
   }
 }
 
+void request_public_key(int sock){
+  printf("UNIMPLEMENTED\n");
+  // printf("Enter the user ID of the user: ");
+  // int req_user_id;
+  // scanf("%d", &req_user_id);
+  // char req_uid_str[10];
+  // memset(req_uid_str, '\0', 10);
+  // sprintf(req_uid_str, "%d", req_user_id);
+
+  // send_data(sock, req_uid_str, strlen(req_uid_str));
+  
+  // char resp[10];
+  // memset(resp, '\0', 10);
+  // receive_data(sock, resp, 10);
+
+  // if(strcmp(resp, "NACK") == 0) {
+  //   printf("Couldn't request the user as it does not exist\n");
+  // }
+}
+
 void create_group(int sock)
 {
   receive_ACK(sock);
@@ -94,6 +114,10 @@ void create_group(int sock)
   send_data(sock, grp_name, strlen(grp_name));
 
   receive_ACK(sock);
+}
+
+void group_invite(int sock) {
+  printf("Unimplemented\n");
 }
 
 int evaluate_inp_cmd(int sock, char *inp)
@@ -120,12 +144,14 @@ int evaluate_inp_cmd(int sock, char *inp)
   }
   else if (strcmp(inp, "/group_invite") == 0)
   {
+    group_invite(sock);
   }
   else if (strcmp(inp, "/group_invite_accept") == 0)
   {
   }
   else if (strcmp(inp, "/request_public_key") == 0)
   {
+    request_public_key(sock);
   }
   else if (strcmp(inp, "/send_public_key") == 0)
   {

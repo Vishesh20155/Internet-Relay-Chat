@@ -117,13 +117,17 @@ void create_new_group(int sock, int user_id)
   receive_data(sock, grp_name, GRP_NAME_LEN);
 
   pthread_mutex_lock(&mutex_grp);
-
-  all_groups[num_grps_created].group_id = num_grps_created;
-  all_groups[num_grps_created].users[0] = user_id;
-  all_groups[num_grps_created].num_members = 1;
-  memset(all_groups[num_grps_created].name, '\0', sizeof(all_groups[num_grps_created].name));
-  strcpy(all_groups[num_grps_created].name, grp_name);
-  num_grps_created++;
+  if(num_grps_created < MAX_NUM_GRPS){
+    all_groups[num_grps_created].group_id = num_grps_created;
+    all_groups[num_grps_created].users[0] = user_id;
+    all_groups[num_grps_created].num_members = 1;
+    memset(all_groups[num_grps_created].name, '\0', sizeof(all_groups[num_grps_created].name));
+    strcpy(all_groups[num_grps_created].name, grp_name);
+    num_grps_created++;
+  } 
+  else {
+    print("Number of groups limit reached!!\n");
+  }
 
   pthread_mutex_unlock(&mutex_grp);
 

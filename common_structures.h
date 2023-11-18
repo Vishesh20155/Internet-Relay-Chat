@@ -14,6 +14,8 @@
 // OpenSSL libcrypto includes
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/dh.h>
+#include <openssl/bn.h>
 
 #define NUM_USERS 10
 #define MAX_LOGGED_IN_USERS 10
