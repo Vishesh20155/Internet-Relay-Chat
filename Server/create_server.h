@@ -8,8 +8,6 @@
 #include "kdc.h"
 #include "chat.h"
 
-#define MAX_CLIENTS 5
-
 void *start_server(void *thread_args)
 {
   int retval;
@@ -43,7 +41,7 @@ void *start_server(void *thread_args)
     exit(EXIT_FAILURE);
   }
 
-  retval = listen(server_fd, MAX_CLIENTS);
+  retval = listen(server_fd, NUM_USERS);
   if (retval < 0)
   {
     perror("Error in using listen");

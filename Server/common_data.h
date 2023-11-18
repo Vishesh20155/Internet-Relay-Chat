@@ -20,6 +20,11 @@ struct logged_in_user_struct logged_in_user_list[MAX_LOGGED_IN_USERS];
 int num_pending_msgs[MAX_LOGGED_IN_USERS] = {0};
 struct message_struct pending_msgs[MAX_LOGGED_IN_USERS][MAX_MSG_QUEUE_LEN];
 
+// For groups
+struct group_struct all_groups[MAX_NUM_GRPS];
+int num_grps_created = 0;
+pthread_mutex_t mutex_grp = PTHREAD_MUTEX_INITIALIZER;
+
 void derive_all_keys()
 {
   printf("^^^^^^Deriving all keys\n");

@@ -18,6 +18,7 @@
 #define NUM_USERS 10
 #define MAX_LOGGED_IN_USERS 10
 #define MAX_MSG_QUEUE_LEN 10
+#define MAX_NUM_GRPS 10
 
 #define KDC_PORT 12345
 #define CHAT_PORT 54321
@@ -27,6 +28,7 @@
 #define BUFFER_SIZE 1024
 #define UNAME_LEN 32
 #define PASSWORD_LEN 32
+#define GRP_NAME_LEN 32
 #define ENCRYPTED_TICKET_LEN 128
 #define SESSION_KEY_LEN 32
 #define LONG_TERM_KEY_LEN 32
@@ -84,6 +86,14 @@ struct logged_in_user_struct
 struct message_struct {
   char sender_name[UNAME_LEN], content[BUFFER_SIZE];
 };
+
+struct group_struct
+{
+  int group_id, num_members;
+  char name[GRP_NAME_LEN];
+  int users[NUM_USERS];
+};
+
 
 int generate_nonce()
 {

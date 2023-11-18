@@ -84,6 +84,18 @@ void show_messages(int sock)
   }
 }
 
+void create_group(int sock)
+{
+  receive_ACK(sock);
+  char grp_name[GRP_NAME_LEN];
+  memset(grp_name, '\0', GRP_NAME_LEN);
+  printf("Group Name: ");
+  scanf("%s", grp_name);
+  send_data(sock, grp_name, strlen(grp_name));
+
+  receive_ACK(sock);
+}
+
 int evaluate_inp_cmd(int sock, char *inp)
 {
   if (strcmp(inp, "/exit") == 0)
@@ -104,6 +116,7 @@ int evaluate_inp_cmd(int sock, char *inp)
   }
   else if (strcmp(inp, "/create_group") == 0)
   {
+    create_group(sock);
   }
   else if (strcmp(inp, "/group_invite") == 0)
   {

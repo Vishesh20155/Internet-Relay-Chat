@@ -3,6 +3,26 @@
 
 #include "common_data.h"
 
+// Helper mfunction to show details of all the groups created
+void show_all_groups()
+{
+  printf("Details of all the groups:\n");
+  pthread_mutex_lock(&mutex_grp);
+
+  for(int i=0; i<num_grps_created; ++i)
+  {
+    printf("Group ID: %d | Name: %s\n", all_groups[i].group_id, all_groups[i].name);
+    printf("\tUsers (%d): ", all_groups[i].num_members);
+    for(int j=0; j<all_groups[i].num_members; ++j)
+    {
+      printf("%d ", all_groups[i].users[j]);
+    }
+    printf("\n\n");
+  }
+
+  pthread_mutex_unlock(&mutex_grp);
+}
+
 void get_logged_in_users(int sock) {
   char num_users_str[10];
   memset(num_users_str, '\0', 10);
@@ -88,6 +108,30 @@ void send_pending_messages(int sock, char *curr_username, int curr_user_id) {
   pthread_mutex_unlock(&mutex_log_in);
 }
 
+void create_new_group(int sock, int user_id)
+{
+  send_ACK(sock);
+  char grp_name[GRP_NAME_LEN];
+  memset(grp_name, '\0', GRP_NAME_LEN);
+
+  receive_data(sock, grp_name, GRP_NAME_LEN);
+
+  pthread_mutex_lock(&mutex_grp);
+
+  all_groups[num_grps_created].group_id = num_grps_created;
+  all_groups[num_grps_created].users[0] = user_id;
+  all_groups[num_grps_created].num_members = 1;
+  memset(all_groups[num_grps_created].name, '\0', sizeof(all_groups[num_grps_created].name));
+  strcpy(all_groups[num_grps_created].name, grp_name);
+  num_grps_created++;
+
+  pthread_mutex_unlock(&mutex_grp);
+
+  send_ACK(sock);
+
+  show_all_groups();
+}
+
 int handle_cmd(int sock, char *inp, char *curr_username, int curr_user_id) {
   if(strcmp(inp, "/exit") == 0) {
     return -1;
@@ -102,7 +146,7 @@ int handle_cmd(int sock, char *inp, char *curr_username, int curr_user_id) {
     send_pending_messages(sock, curr_username, curr_user_id);
   }
   else if(strcmp(inp, "/create_group") == 0) {
-    
+    create_new_group(sock, curr_user_id);
   }
   else if(strcmp(inp, "/group_invite") == 0) {
     
