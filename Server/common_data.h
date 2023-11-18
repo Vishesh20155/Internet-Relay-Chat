@@ -16,6 +16,10 @@ int num_logged_in_users = 0;
 // char logged_in_usernames[MAX_LOGGED_IN_USERS][UNAME_LEN];
 struct logged_in_user_struct logged_in_user_list[MAX_LOGGED_IN_USERS];
 
+// For messages
+int num_pending_msgs[MAX_LOGGED_IN_USERS] = {0};
+struct message_struct pending_msgs[MAX_LOGGED_IN_USERS][MAX_MSG_QUEUE_LEN];
+
 void derive_all_keys()
 {
   printf("^^^^^^Deriving all keys\n");

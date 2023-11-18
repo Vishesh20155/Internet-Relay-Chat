@@ -90,7 +90,7 @@ void *chat_functionality(void *socket)
     num_logged_in_users++;
     pthread_mutex_unlock(&mutex_log_in);
 
-    serve_client(sock);
+    serve_client(sock, get_id_from_uname(t1.uname), t1.uname);
 
     printf("It was a pleasure serving client: %s\n", t1.uname);
 

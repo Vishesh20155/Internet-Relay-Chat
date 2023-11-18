@@ -16,6 +16,9 @@
 #include <openssl/err.h>
 
 #define NUM_USERS 10
+#define MAX_LOGGED_IN_USERS 10
+#define MAX_MSG_QUEUE_LEN 10
+
 #define KDC_PORT 12345
 #define CHAT_PORT 54321
 #define KDC_SERVER 1
@@ -29,7 +32,6 @@
 #define LONG_TERM_KEY_LEN 32
 #define NONCE_LEN 10
 #define CMD_LEN 100
-#define MAX_LOGGED_IN_USERS 20
 
 unsigned char *random_key = (unsigned char *)"01234567890123456789012345678901";
 
@@ -77,6 +79,10 @@ struct logged_in_user_struct
 {
   int user_id;
   char username[UNAME_LEN];
+};
+
+struct message_struct {
+  char sender_name[UNAME_LEN], content[BUFFER_SIZE];
 };
 
 int generate_nonce()
@@ -214,6 +220,25 @@ void password_to_key(char *password, unsigned char *key)
   {
     fprintf(stderr, "Error deriving key using PBKDF2\n");
     return;
+  }
+}
+
+void send_ACK(int sock_fd) {
+  int retval = send(sock_fd, "ACK", 3, 0);
+  if (retval < 0)
+  {
+    perror("Unable to send ACK");
+    exit(EXIT_FAILURE);
+  }
+}
+
+void receive_ACK(int sock_fd) {
+  char buf[3];
+  int retval = recv(sock_fd, buf, 3, 0);
+  if(retval < 0) 
+  {
+    perror("Unable to receive ACK");
+    exit(EXIT_FAILURE);
   }
 }
 

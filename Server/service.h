@@ -21,7 +21,74 @@ void get_logged_in_users(int sock) {
   pthread_mutex_unlock(&mutex_log_in);
 }
 
-int handle_cmd(int sock, char *inp) {
+void broadcast_message_to_logged_in(int sock, char *curr_username, int curr_user_id) 
+{
+  send_ACK(sock);
+
+  struct message_struct message;
+  memset(message.sender_name, '\0', sizeof(message.sender_name));
+  memset(message.content, '\0', sizeof(message.content));
+
+  receive_data(sock, message.content, sizeof(message.sender_name));
+  strcpy(message.sender_name, curr_username);
+
+  send_ACK(sock);
+
+  // Add the message to all the users pending messages list
+  pthread_mutex_lock(&mutex_log_in);
+  for(int i=0; i<num_logged_in_users; ++i) {
+    if(logged_in_user_list[i].user_id == curr_user_id) {
+      continue;
+    }
+
+    int receiver_uid = logged_in_user_list[i].user_id;
+    int q_len = num_pending_msgs[receiver_uid];
+    if(q_len >= MAX_MSG_QUEUE_LEN) {
+      printf("Pending message queue length full for client: %s\n", logged_in_user_list[i].username);
+      continue;
+    }
+    memset(pending_msgs[receiver_uid][q_len].sender_name, '\0', sizeof(pending_msgs[receiver_uid][q_len].sender_name));
+    memset(pending_msgs[receiver_uid][q_len].content, '\0', sizeof(pending_msgs[receiver_uid][q_len].content));
+
+    strcpy(pending_msgs[receiver_uid][q_len].sender_name, curr_username);
+    strcpy(pending_msgs[receiver_uid][q_len].content, message.content);
+    num_pending_msgs[receiver_uid]++;
+  }
+  pthread_mutex_unlock(&mutex_log_in);
+}
+
+void send_pending_messages(int sock, char *curr_username, int curr_user_id) {
+  char num_msgs_str[10];
+  memset(num_msgs_str, '\0', 10);
+  
+  pthread_mutex_lock(&mutex_log_in);
+  sprintf(num_msgs_str, "%d", num_pending_msgs[curr_user_id]);
+  pthread_mutex_unlock(&mutex_log_in);
+
+  send_data(sock, num_msgs_str, 10);
+
+  int num_msgs = atoi(num_msgs_str);
+  if(num_msgs <= 0) return;
+
+  // Receive ACK
+  receive_ACK(sock);
+
+  int data_len = num_msgs * sizeof(struct message_struct);
+
+  pthread_mutex_lock(&mutex_log_in);
+
+  send_data(sock, pending_msgs[curr_user_id], data_len);
+  for(int i=0; i<num_msgs; ++i) {
+    memset(pending_msgs[curr_user_id][i].content, '\0', sizeof(pending_msgs[curr_user_id][i].content));
+    memset(pending_msgs[curr_user_id][i].sender_name, '\0', sizeof(pending_msgs[curr_user_id][i].sender_name));
+  }
+  num_pending_msgs[curr_user_id] = 0;
+
+
+  pthread_mutex_unlock(&mutex_log_in);
+}
+
+int handle_cmd(int sock, char *inp, char *curr_username, int curr_user_id) {
   if(strcmp(inp, "/exit") == 0) {
     return -1;
   }
@@ -29,7 +96,10 @@ int handle_cmd(int sock, char *inp) {
     get_logged_in_users(sock);
   }
   else if(strcmp(inp, "/write_all") == 0) {
-    
+    broadcast_message_to_logged_in(sock, curr_username, curr_user_id);
+  }
+  else if(strcmp(inp, "/show_messages") == 0) {
+    send_pending_messages(sock, curr_username, curr_user_id);
   }
   else if(strcmp(inp, "/create_group") == 0) {
     
@@ -54,12 +124,13 @@ int handle_cmd(int sock, char *inp) {
   return 1;
 }
 
-void serve_client(int sock) {
+void serve_client(int sock, int userid, char *username) {
+
   while(1) {
     char command[CMD_LEN];
     memset(command, '\0', CMD_LEN);
     receive_data(sock, command, CMD_LEN);
-    int retval = handle_cmd(sock, command);
+    int retval = handle_cmd(sock, command, username, userid);
 
     if(retval == -1) {
       return;
