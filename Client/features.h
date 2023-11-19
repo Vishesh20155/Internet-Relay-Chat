@@ -81,29 +81,9 @@ void show_messages(int sock)
   // Print received messages
   for (int i = 0; i < num_msgs; ++i)
   {
+    
     printf("\tMessage from %s : %s\n", pending_msgs[i].sender_name, pending_msgs[i].content);
   }
-}
-
-void request_public_key(int sock)
-{
-  printf("UNIMPLEMENTED\n");
-  // printf("Enter the user ID of the user: ");
-  // int req_user_id;
-  // scanf("%d", &req_user_id);
-  // char req_uid_str[10];
-  // memset(req_uid_str, '\0', 10);
-  // sprintf(req_uid_str, "%d", req_user_id);
-
-  // send_data(sock, req_uid_str, strlen(req_uid_str));
-
-  // char resp[10];
-  // memset(resp, '\0', 10);
-  // receive_data(sock, resp, 10);
-
-  // if(strcmp(resp, "NACK") == 0) {
-  //   printf("Couldn't request the user as it does not exist\n");
-  // }
 }
 
 void create_group(int sock)
@@ -201,6 +181,58 @@ void group_invite_accept(int sock)
   printf("\t%s\n", resp);
 }
 
+void init_group_dhxchg(int sock)
+{
+  // receive_ACK();
+
+  // printf("\tGroup ID: ");
+  // int gid;
+  // scanf("%d", &gid);
+
+  // char gid_str[10];
+  // memset(gid_str, '\0', 10);
+  // sprintf(gid_str, "%d", gid);
+
+  // send_data(sock, gid_str, strlen(gid_str));
+  printf("UNIMPLEMENTED\n");
+}
+
+void request_public_key(int sock)
+{
+  receive_ACK(sock);
+  char inp_uname[UNAME_LEN];
+  memset(inp_uname, '\0', UNAME_LEN);
+  printf("Username: ");
+  scanf("%s", inp_uname);
+
+  send_data(sock, inp_uname, strlen(inp_uname));
+
+  char resp[BUFFER_SIZE];
+  memset(resp, '\0', BUFFER_SIZE);
+
+  receive_data(sock, (void *)resp, BUFFER_SIZE);
+
+  printf("%s\n", resp);
+}
+
+void send_public_key(int sock)
+{
+  // receive_ACK(sock);
+  // char inp_uname[UNAME_LEN];
+  // memset(inp_uname, '\0', UNAME_LEN);
+  // printf("Username: ");
+  // scanf("%s", inp_uname);
+
+  // send_data(sock, inp_uname, strlen(inp_uname));
+
+  char resp[BUFFER_SIZE];
+  memset(resp, '\0', BUFFER_SIZE);
+
+  receive_data(sock, (void *)resp, BUFFER_SIZE);
+
+  printf("%s\n", resp);
+}
+
 int evaluate_inp_cmd(int sock, char *inp)
 {
   if (strcmp(inp, "/exit") == 0)
@@ -241,6 +273,11 @@ int evaluate_inp_cmd(int sock, char *inp)
   }
   else if (strcmp(inp, "/send_public_key") == 0)
   {
+    send_public_key(sock);
+  }
+  else if (strcmp(inp, "/init_group_dhxchg") == 0)
+  {
+    init_group_dhxchg(sock);
   }
   else
   {
@@ -257,6 +294,22 @@ int evaluate_inp_cmd(int sock, char *inp)
 void input_command(int sock)
 {
   char inp_cmd[CMD_LEN];
+  DH *dh = DH_get_2048_256();
+  if (1 != DH_generate_key(dh))
+    handleError();
+  const BIGNUM *pub_key = NULL;
+  DH_get0_key(dh, &pub_key, NULL);
+
+  char *hex_pub_key = BN_bn2hex(pub_key);
+  char *hex_pub_key_copy = (char *)malloc(strlen(hex_pub_key));
+  
+  memcpy(hex_pub_key_copy, hex_pub_key, strlen(hex_pub_key));
+
+  send_data(sock, hex_pub_key_copy, strlen(hex_pub_key_copy));
+
+  const BIGNUM *pvt_key =DH_get0_priv_key(dh);
+  char *hex_pvt_key = BN_bn2hex(pvt_key);
+
   while (1)
   {
     memset(inp_cmd, '\0', CMD_LEN);

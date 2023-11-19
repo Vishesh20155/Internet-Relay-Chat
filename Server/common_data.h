@@ -34,7 +34,9 @@ int group_user_status[MAX_NUM_GRPS][NUM_USERS];
 
 // For Diffie Hellman
 pthread_mutex_t mutex_dh = PTHREAD_MUTEX_INITIALIZER;
-char all_public_keys_hex[NUM_USERS][DH_PUB_KEY_LEN];
+char all_public_keys_hex[NUM_USERS][DH_PUB_KEY_LEN+1];
+
+// For public key requests
 
 void derive_all_keys()
 {

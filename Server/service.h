@@ -272,7 +272,94 @@ void accept_invitation(int sock, int uid)
   show_all_groups();
 }
 
-int handle_cmd(int sock, char *inp, char *curr_username, int curr_user_id, DH *dh)
+void initiate_DHKE(int sock, int uid, DH *dh)
+{
+  // Receive the group ID
+  // char gid_str[10];
+  // memset(gid_str, '\0', 10);
+  // receive_data(sock, gid_str, sizeof(gid_str));
+
+  // int gid = atoi(gid_str);
+
+  // pthread_mutex_lock(&mutex_grp);
+  
+  // if(gid >= num_grps_created) // check validity of group id
+  // {
+  //   strcpy(resp, "Invalid Group ID entered");
+  // }
+  // else if(all_groups[gid].users[0] != uid) // check if owner of group or not
+  // {
+  //   strcpy(resp, "You not the creator of this group");
+  // }
+
+  // pthread_mutex_unlock(&mutex_grp);
+}
+
+void create_public_key_request(int sock, int uid)
+{
+  send_ACK(sock);
+  char inp_uname[UNAME_LEN];
+  memset(inp_uname, '\0', UNAME_LEN);
+  receive_data(sock, inp_uname, sizeof(inp_uname));
+
+  pthread_mutex_lock(&mutex_log_in);
+  int found = 0;
+  for(int i=0; i<num_logged_in_users; ++i) {
+    if(strcmp(inp_uname, logged_in_user_list[i].username) == 0) {
+      found = 1;
+      break;
+    }
+  }
+  pthread_mutex_unlock(&mutex_log_in);
+
+  char resp[BUFFER_SIZE];
+  memset(resp, '\0', sizeof(resp));
+
+  if(found == 0) {
+    strcpy(resp, "User is not logged in!");
+  }
+  else {
+    strcpy(resp, "Requested the user for public key");
+  }
+  send_data(sock, resp, strlen(resp));
+}
+
+void supply_public_key(int sock, int uid, char *pub_key)
+{
+  // send_ACK(sock);
+  // char inp_uname[UNAME_LEN];
+  // memset(inp_uname, '\0', UNAME_LEN);
+
+  // receive_data(sock, inp_uname, sizeof(inp_uname));
+  // // No error handling done
+  // int dest_sock = -1, target_uid = -1;
+  // pthread_mutex_lock(&mutex_log_in);
+  // for(int i=0; i<num_logged_in_users; ++i) {
+  //   if(strcmp(inp_uname, logged_in_user_list[i].username) == 0) {
+  //     dest_sock = logged_in_user_list[i].sock_fd;
+  //     target_uid = logged_in_user_list[i].user_id;
+  //     break;
+  //   }
+  // }
+  // pthread_mutex_unlock(&mutex_log_in);
+
+  // char resp[BUFFER_SIZE];
+  // memset(resp, '\0', sizeof(resp));
+  // sprintf(resp, "Public Key: %s", all_public_keys_hex[target_uid]);
+
+  // send_data(dest_sock, resp, strlen(resp));
+  
+  // memset(resp, '\0', sizeof(resp));
+
+  char resp[BUFFER_SIZE];
+  memset(resp, '\0', sizeof(resp));
+  pthread_mutex_lock(&mutex_dh);
+  strcpy(all_public_keys_hex[uid], pub_key);
+  pthread_mutex_unlock(&mutex_dh);
+  strcpy(resp, "Sent public key successfully");
+}
+
+int handle_cmd(int sock, char *inp, char *curr_username, int curr_user_id, char *public_key)
 {
   if (strcmp(inp, "/exit") == 0)
   {
@@ -308,9 +395,15 @@ int handle_cmd(int sock, char *inp, char *curr_username, int curr_user_id, DH *d
   }
   else if (strcmp(inp, "/request_public_key") == 0)
   {
+    create_public_key_request(sock, curr_user_id);
   }
   else if (strcmp(inp, "/send_public_key") == 0)
   {
+    supply_public_key(sock, curr_user_id, public_key);
+  }
+  else if (strcmp(inp, "/init_group_dhxchg") == 0)
+  {
+    // initiate_DHKE(sock, curr_user_id, dh);
   }
   else
   {
@@ -323,13 +416,10 @@ int handle_cmd(int sock, char *inp, char *curr_username, int curr_user_id, DH *d
 
 void serve_client(int sock, int userid, char *username)
 {
-  DH *dh = DH_get_2048_256();
-  if (1 != DH_generate_key(dh))
-    handleError();
-  const BIGNUM *pub_key = NULL;
-  DH_get0_key(dh, &pub_key, NULL);
+  char hex_pub_key[DH_PUB_KEY_LEN+1];
+  memset(hex_pub_key, '\0', sizeof(hex_pub_key));
+  receive_data(sock, hex_pub_key, DH_PUB_KEY_LEN);
 
-  char *hex_pub_key = BN_bn2hex(pub_key);
   pthread_mutex_lock(&mutex_dh);
   memset(all_public_keys_hex[userid], '\0', sizeof(all_public_keys_hex[userid]));
   strcpy(all_public_keys_hex[userid], hex_pub_key);
@@ -340,7 +430,7 @@ void serve_client(int sock, int userid, char *username)
     char command[CMD_LEN];
     memset(command, '\0', CMD_LEN);
     receive_data(sock, command, CMD_LEN);
-    int retval = handle_cmd(sock, command, username, userid, dh);
+    int retval = handle_cmd(sock, command, username, userid, hex_pub_key);
 
     if (retval == -1)
     {

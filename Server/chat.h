@@ -87,6 +87,7 @@ void *chat_functionality(void *socket)
     memset(logged_in_user_list[num_logged_in_users].username, '\0', UNAME_LEN);
     strcpy(logged_in_user_list[num_logged_in_users].username, t1.uname);
     logged_in_user_list[num_logged_in_users].user_id = get_id_from_uname(t1.uname);
+    logged_in_user_list[num_logged_in_users].sock_fd = sock;
     num_logged_in_users++;
     pthread_mutex_unlock(&mutex_log_in);
 

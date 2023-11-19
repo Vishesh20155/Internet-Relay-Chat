@@ -85,6 +85,7 @@ struct logged_in_user_struct
 {
   int user_id;
   char username[UNAME_LEN];
+  int sock_fd;
 };
 
 struct message_struct {
