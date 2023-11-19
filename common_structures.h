@@ -36,6 +36,8 @@
 #define LONG_TERM_KEY_LEN 32
 #define NONCE_LEN 10
 #define CMD_LEN 100
+#define DH_PUB_KEY_LEN 512
+#define DH_SHARED_KEY_LEN 256
 
 unsigned char *random_key = (unsigned char *)"01234567890123456789012345678901";
 
@@ -94,6 +96,11 @@ struct group_struct
   int group_id, num_members;
   char name[GRP_NAME_LEN];
   int users[NUM_USERS];
+};
+
+struct group_invite
+{
+  int gid, invitee_uid;
 };
 
 
@@ -252,6 +259,12 @@ void receive_ACK(int sock_fd) {
     perror("Unable to receive ACK");
     exit(EXIT_FAILURE);
   }
+}
+
+void handleError()
+{
+  ERR_print_errors_fp(stderr);
+  exit(EXIT_FAILURE);
 }
 
 #endif // COMMON_H

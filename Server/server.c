@@ -16,6 +16,7 @@ int main()
   chat_args.server_type = CHAT_SERVER;
 
   derive_all_keys();
+  set_group_status();
 
   // Starting the 2 servers on 2 separate threads:
   retval = pthread_create(&kdc_thread, NULL, start_server, (void *)&kdc_args);
