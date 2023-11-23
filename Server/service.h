@@ -77,6 +77,10 @@ void broadcast_message_to_logged_in(int sock, char *curr_username, int curr_user
     strcpy(pending_msgs[receiver_uid][q_len].sender_name, curr_username);
     strcpy(pending_msgs[receiver_uid][q_len].content, message.content);
     pending_msgs[receiver_uid][q_len].grp_id = -1;
+    if (kill(all_pids[receiver_uid], SIGUSR1) == -1)
+    {
+      perror("Error sending signal");
+    }
     num_pending_msgs[receiver_uid]++;
   }
   pthread_mutex_unlock(&mutex_log_in);
@@ -163,24 +167,26 @@ void send_grp_invite(int sock, int uid)
   memset(resp, '\0', BUFFER_SIZE);
 
   pthread_mutex_lock(&mutex_grp);
-  if(inv.gid >= num_grps_created)
+  if (inv.gid >= num_grps_created)
   {
     strcpy(resp, "Invalid group ID");
   }
-  else if(inv.invitee_uid >= NUM_USERS)
+  else if (inv.invitee_uid >= NUM_USERS)
   {
     strcpy(resp, "Invalid User ID");
   }
-  else if(all_groups[inv.gid].users[0] != uid)
+  else if (all_groups[inv.gid].users[0] != uid)
   {
     // Not group creator
     strcpy(resp, "You are not the creator of this group");
   }
-  else if(group_user_status[inv.gid][inv.invitee_uid] == 2) {
+  else if (group_user_status[inv.gid][inv.invitee_uid] == 2)
+  {
     // User already a part of the group
     strcpy(resp, "User already part of this group");
   }
-  else {
+  else
+  {
     // User invited
     group_user_status[inv.gid][inv.invitee_uid] = 1;
     strcpy(resp, "Invitation sent");
@@ -195,8 +201,9 @@ void check_pending_invites(int sock, int uid)
   // Find num_pending_invites
   int num_pending_invites = 0;
   pthread_mutex_lock(&mutex_grp);
-  for(int i=0; i<num_grps_created; ++i) {
-    if(group_user_status[i][uid] == 1)
+  for (int i = 0; i < num_grps_created; ++i)
+  {
+    if (group_user_status[i][uid] == 1)
     {
       num_pending_invites++;
     }
@@ -209,7 +216,8 @@ void check_pending_invites(int sock, int uid)
   send_data(sock, num_pending_invites_str, sizeof(num_pending_invites_str));
 
   // Check num_pending_invites > 0
-  if(num_pending_invites <= 0) return;
+  if (num_pending_invites <= 0)
+    return;
 
   // Receive ACK
   receive_ACK(sock);
@@ -220,8 +228,9 @@ void check_pending_invites(int sock, int uid)
   grp_invites = (struct group_struct *)malloc(datalen);
   int added_grps = 0;
   pthread_mutex_lock(&mutex_grp);
-  for(int i=0; i<num_grps_created; ++i) {
-    if(group_user_status[i][uid] == 1)
+  for (int i = 0; i < num_grps_created; ++i)
+  {
+    if (group_user_status[i][uid] == 1)
     {
       memcpy((void *)&(grp_invites[added_grps]), (void *)&(all_groups[i]), sizeof(struct group_struct));
       added_grps++;
@@ -235,7 +244,7 @@ void check_pending_invites(int sock, int uid)
 void accept_invitation(int sock, int uid)
 {
   send_ACK(sock);
-  
+
   // Receive the group ID
   char gid_str[10];
   memset(gid_str, '\0', 10);
@@ -245,18 +254,18 @@ void accept_invitation(int sock, int uid)
 
   char resp[BUFFER_SIZE];
   memset(resp, '\0', sizeof(resp));
-  
+
   pthread_mutex_lock(&mutex_grp);
-  
-  if(gid >= num_grps_created) // check validity of group id
+
+  if (gid >= num_grps_created) // check validity of group id
   {
     strcpy(resp, "Invalid Group ID entered");
   }
-  else if(group_user_status[gid][uid] != 1) // check if invited
+  else if (group_user_status[gid][uid] != 1) // check if invited
   {
     strcpy(resp, "You were not invited to this group");
   }
-  else  // Invite accepted
+  else // Invite accepted
   {
     strcpy(resp, "Invitation Accepted!");
     // Update the status and the member to group
@@ -283,7 +292,7 @@ void initiate_DHKE(int sock, int uid, DH *dh)
   // int gid = atoi(gid_str);
 
   // pthread_mutex_lock(&mutex_grp);
-  
+
   // if(gid >= num_grps_created) // check validity of group id
   // {
   //   strcpy(resp, "Invalid Group ID entered");
@@ -305,8 +314,10 @@ void create_public_key_request(int sock, int uid)
 
   pthread_mutex_lock(&mutex_log_in);
   int found = 0;
-  for(int i=0; i<num_logged_in_users; ++i) {
-    if(strcmp(inp_uname, logged_in_user_list[i].username) == 0) {
+  for (int i = 0; i < num_logged_in_users; ++i)
+  {
+    if (strcmp(inp_uname, logged_in_user_list[i].username) == 0)
+    {
       found = 1;
       break;
     }
@@ -316,10 +327,12 @@ void create_public_key_request(int sock, int uid)
   char resp[BUFFER_SIZE];
   memset(resp, '\0', sizeof(resp));
 
-  if(found == 0) {
+  if (found == 0)
+  {
     strcpy(resp, "User is not logged in!");
   }
-  else {
+  else
+  {
     strcpy(resp, "Requested the user for public key");
   }
   send_data(sock, resp, strlen(resp));
@@ -349,7 +362,7 @@ void supply_public_key(int sock, int uid, char *pub_key)
   // sprintf(resp, "Public Key: %s", all_public_keys_hex[target_uid]);
 
   // send_data(dest_sock, resp, strlen(resp));
-  
+
   // memset(resp, '\0', sizeof(resp));
 
   char resp[BUFFER_SIZE];
@@ -374,11 +387,12 @@ void broadcast_to_grp(int sock, int uid, char *uname)
   pthread_mutex_lock(&mutex_log_in);
   pthread_mutex_lock(&mutex_grp);
   struct group_struct curr_grp = all_groups[grp_id];
-  
-  for(int i=0; i<curr_grp.num_members; ++i)
+
+  for (int i = 0; i < curr_grp.num_members; ++i)
   {
     int grp_mem = curr_grp.users[i];
-    if(grp_mem == uid) continue;
+    if (grp_mem == uid)
+      continue;
     int q_len = num_pending_msgs[grp_mem];
     if (q_len >= MAX_MSG_QUEUE_LEN)
     {
@@ -386,7 +400,11 @@ void broadcast_to_grp(int sock, int uid, char *uname)
       continue;
     }
 
-    memcpy((void*)&(pending_msgs[grp_mem][q_len]), (void *)&message, sizeof(message));
+    memcpy((void *)&(pending_msgs[grp_mem][q_len]), (void *)&message, sizeof(message));
+    if (kill(all_pids[grp_mem], SIGUSR1) == -1)
+    {
+      perror("Error sending signal");
+    }
     num_pending_msgs[grp_mem]++;
   }
   pthread_mutex_unlock(&mutex_grp);
@@ -454,7 +472,7 @@ int handle_cmd(int sock, char *inp, char *curr_username, int curr_user_id, char 
 
 void serve_client(int sock, int userid, char *username)
 {
-  char hex_pub_key[DH_PUB_KEY_LEN+1];
+  char hex_pub_key[DH_PUB_KEY_LEN + 1];
   memset(hex_pub_key, '\0', sizeof(hex_pub_key));
   receive_data(sock, hex_pub_key, DH_PUB_KEY_LEN);
 
@@ -462,6 +480,17 @@ void serve_client(int sock, int userid, char *username)
   memset(all_public_keys_hex[userid], '\0', sizeof(all_public_keys_hex[userid]));
   strcpy(all_public_keys_hex[userid], hex_pub_key);
   pthread_mutex_unlock(&mutex_dh);
+
+  send_ACK(sock);
+
+  // Receive the pid
+  char client_pid_str[10];
+  memset(client_pid_str, '\0', sizeof(client_pid_str));
+
+  receive_data(sock, client_pid_str, sizeof(client_pid_str));
+  pthread_mutex_lock(&mutex_log_in);
+  all_pids[userid] = atoi(client_pid_str);
+  pthread_mutex_unlock(&mutex_log_in);
 
   while (1)
   {

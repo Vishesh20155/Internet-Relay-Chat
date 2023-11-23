@@ -8,6 +8,7 @@ char all_unames[NUM_USERS][UNAME_LEN] = {"chat server", "vishesh", "larry", "bob
 char all_pwds[NUM_USERS][PASSWORD_LEN] = {"chat server", "vishesh", "larry", "bob", "harry", "joe", "alpha", "beta", "gamma", "delta"};
 unsigned char all_ssnkeys[NUM_USERS][SESSION_KEY_LEN];
 int all_u_ids[NUM_USERS];
+int all_pids[NUM_USERS];
 
 struct user_details all_users_details[NUM_USERS];
 
@@ -47,6 +48,7 @@ void derive_all_keys()
     strcpy(all_users_details[i].username, all_unames[i]);
     strcpy(all_users_details[i].password, all_pwds[i]);
     password_to_key(all_users_details[i].password, all_users_details[i].key);
+    all_pids[i] = -1;
   }
 }
 

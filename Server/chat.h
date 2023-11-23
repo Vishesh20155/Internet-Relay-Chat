@@ -86,16 +86,17 @@ void *chat_functionality(void *socket)
   if(num_logged_in_users < MAX_LOGGED_IN_USERS) {
     memset(logged_in_user_list[num_logged_in_users].username, '\0', UNAME_LEN);
     strcpy(logged_in_user_list[num_logged_in_users].username, t1.uname);
-    logged_in_user_list[num_logged_in_users].user_id = get_id_from_uname(t1.uname);
+    int client_uid = get_id_from_uname(t1.uname);
+    logged_in_user_list[num_logged_in_users].user_id = client_uid;
     logged_in_user_list[num_logged_in_users].sock_fd = sock;
     num_logged_in_users++;
     pthread_mutex_unlock(&mutex_log_in);
 
     serve_client(sock, get_id_from_uname(t1.uname), t1.uname);
 
-    printf("It was a pleasure serving client: %s\n", t1.uname);
-
     pthread_mutex_lock(&mutex_log_in);
+    printf("It was a pleasure serving client (PID: %d): %s\n", all_pids[client_uid], t1.uname);
+
     // Remove element from list
     remove_logged_in_user(t1.uname);
     num_logged_in_users--;

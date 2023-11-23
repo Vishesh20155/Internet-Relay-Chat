@@ -87,6 +87,8 @@ int main(int argc, char const *argv[])
 
   printf("NS part 2 done\n");
 
+  printf("PID: %d\n", getpid());
+
   printf("\n----------------\n");
   printf("\n----------------\n\n");
 

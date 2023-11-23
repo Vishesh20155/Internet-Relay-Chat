@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 #include <stdbool.h>
 #include <time.h>
+#include <signal.h>
 
 // OpenSSL libcrypto includes
 #include <openssl/evp.h>

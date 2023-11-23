@@ -1,5 +1,7 @@
 #include "../common_structures.h"
 
+int socket_fd;
+
 /*Function to show the list of commands available to the users*/
 void show_menu()
 {
@@ -81,7 +83,7 @@ void show_messages(int sock)
   // Print received messages
   for (int i = 0; i < num_msgs; ++i)
   {
-    if(pending_msgs[i].grp_id == -1)
+    if (pending_msgs[i].grp_id == -1)
     {
       printf("\tMessage from %s : %s\n", pending_msgs[i].sender_name, pending_msgs[i].content);
     }
@@ -90,6 +92,15 @@ void show_messages(int sock)
       printf("\tMessage in group %d from %s : %s\n", pending_msgs[i].grp_id, pending_msgs[i].sender_name, pending_msgs[i].content);
     }
   }
+}
+
+void show_messages_signal_handler(int signal_number)
+{
+  printf("\n\nNew Messages %d:\n", socket_fd);
+
+  send_data(socket_fd, "/show_messages", strlen("/show_messages"));
+  show_messages(socket_fd);
+  printf("Command: \n");
 }
 
 void create_group(int sock)
@@ -106,7 +117,8 @@ void create_group(int sock)
   receive_data(sock, grp_id_str, sizeof(grp_id_str));
 
   int new_grp_id = atoi(grp_id_str);
-  if(new_grp_id < 0) {
+  if (new_grp_id < 0)
+  {
     printf("Unable to create group. Check server logs\n");
     return;
   }
@@ -148,7 +160,8 @@ void show_invites(int sock)
   printf("\tYou have %d pending invites\n", num_pending_invites);
 
   // Check num_pending_invites > 0
-  if(num_pending_invites <= 0) return;
+  if (num_pending_invites <= 0)
+    return;
 
   // Send ack
   send_ACK(sock);
@@ -160,7 +173,8 @@ void show_invites(int sock)
 
   receive_data(sock, (void *)grp_invites, datalen);
 
-  for(int i=0; i<num_pending_invites; ++i) {
+  for (int i = 0; i < num_pending_invites; ++i)
+  {
     printf("Pending invite for Group ID: %d | Group name: %s\n", grp_invites[i].group_id, grp_invites[i].name);
   }
 }
@@ -344,13 +358,29 @@ void input_command(int sock)
 
   char *hex_pub_key = BN_bn2hex(pub_key);
   char *hex_pub_key_copy = (char *)malloc(strlen(hex_pub_key));
-  
+
   memcpy(hex_pub_key_copy, hex_pub_key, strlen(hex_pub_key));
 
   send_data(sock, hex_pub_key_copy, strlen(hex_pub_key_copy));
 
-  const BIGNUM *pvt_key =DH_get0_priv_key(dh);
+  const BIGNUM *pvt_key = DH_get0_priv_key(dh);
   char *hex_pvt_key = BN_bn2hex(pvt_key);
+  receive_ACK(sock);
+
+  // Send the PID as well
+  char client_pid_str[10];
+  memset(client_pid_str, '\0', sizeof(client_pid_str));
+
+  sprintf(client_pid_str, "%d", getpid());
+  send_data(sock, client_pid_str, strlen(client_pid_str));
+
+  socket_fd = sock;
+
+  // Setup signal handler:
+  if (signal(SIGUSR1, show_messages_signal_handler) == SIG_ERR)
+  {
+    perror("Error setting up signal handler");
+  }
 
   while (1)
   {
