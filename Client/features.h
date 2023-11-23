@@ -208,7 +208,7 @@ void compute_DH_key(int sock, int uid, unsigned char shared_key[SHARED_SECRET_LE
   unsigned char aes_key[32]; // AES-256 key
   EVP_Digest(shared_key, sizeof(shared_key), aes_key, NULL, EVP_sha256(), NULL);
   // printf("Length of AES key: %ld\n", strlen(aes_key));
-  send_data();
+  send_data(sock, aes_key, sizeof(aes_key));
   
   printf("Derived and communicated the shared key to everyone in the group\n");
 
