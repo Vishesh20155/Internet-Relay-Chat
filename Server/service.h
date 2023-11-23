@@ -77,6 +77,7 @@ void broadcast_message_to_logged_in(int sock, char *curr_username, int curr_user
     strcpy(pending_msgs[receiver_uid][q_len].sender_name, curr_username);
     strcpy(pending_msgs[receiver_uid][q_len].content, message.content);
     pending_msgs[receiver_uid][q_len].grp_id = -1;
+    send_data(logged_in_user_list[i].sock_fd, "/show_messages", strlen("/show_messages"));
     if (kill(all_pids[receiver_uid], SIGUSR1) == -1)
     {
       perror("Error sending signal");
@@ -192,6 +193,24 @@ void send_grp_invite(int sock, int uid)
     strcpy(resp, "Invitation sent");
   }
   pthread_mutex_unlock(&mutex_grp);
+
+  int invitee_sock_fd = -1;
+  pthread_mutex_lock(&mutex_log_in);
+  for(int i=0; i<num_logged_in_users; ++i) {
+    if(logged_in_user_list[i].user_id == inv.invitee_uid) {
+      invitee_sock_fd = logged_in_user_list[i].sock_fd;
+      break;
+    }
+  }
+  pthread_mutex_unlock(&mutex_log_in);
+
+  if(invitee_sock_fd != -1){
+    send_data(invitee_sock_fd, "/show_invites", strlen("/show_invites"));
+    if (kill(all_pids[inv.invitee_uid], SIGUSR1) == -1)
+    {
+      perror("Error sending signal");
+    }
+  }
 
   send_data(sock, resp, strlen(resp));
 }
@@ -401,10 +420,22 @@ void broadcast_to_grp(int sock, int uid, char *uname)
     }
 
     memcpy((void *)&(pending_msgs[grp_mem][q_len]), (void *)&message, sizeof(message));
-    if (kill(all_pids[grp_mem], SIGUSR1) == -1)
-    {
-      perror("Error sending signal");
+
+    int receiver_sock_fd = -1;
+    for(int j=0; j<num_logged_in_users; ++j){
+      if(logged_in_user_list[j].user_id == grp_mem) {
+        receiver_sock_fd = logged_in_user_list[j].sock_fd;
+      }
     }
+
+    if(receiver_sock_fd != -1){
+      send_data(receiver_sock_fd, "/show_messages", strlen("/show_messages"));
+      if (kill(all_pids[grp_mem], SIGUSR1) == -1)
+      {
+        perror("Error sending signal");
+      }
+    }
+
     num_pending_msgs[grp_mem]++;
   }
   pthread_mutex_unlock(&mutex_grp);

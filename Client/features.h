@@ -64,7 +64,7 @@ void show_messages(int sock)
   receive_data(sock, num_msgs_str, 10);
 
   int num_msgs = atoi(num_msgs_str);
-  printf("Number of Pending messages for you: %d\n", num_msgs);
+  printf("\n\tNumber of Pending messages for you: %d\n", num_msgs);
 
   if (num_msgs <= 0)
     return;
@@ -92,15 +92,6 @@ void show_messages(int sock)
       printf("\tMessage in group %d from %s : %s\n", pending_msgs[i].grp_id, pending_msgs[i].sender_name, pending_msgs[i].content);
     }
   }
-}
-
-void show_messages_signal_handler(int signal_number)
-{
-  printf("\n\nNew Messages %d:\n", socket_fd);
-
-  send_data(socket_fd, "/show_messages", strlen("/show_messages"));
-  show_messages(socket_fd);
-  printf("Command: \n");
 }
 
 void create_group(int sock)
@@ -157,7 +148,7 @@ void show_invites(int sock)
   receive_data(sock, num_pending_invites_str, sizeof(num_pending_invites_str));
   int num_pending_invites = atoi(num_pending_invites_str);
 
-  printf("\tYou have %d pending invites\n", num_pending_invites);
+  printf("\n\tYou have %d pending invites\n", num_pending_invites);
 
   // Check num_pending_invites > 0
   if (num_pending_invites <= 0)
@@ -175,7 +166,7 @@ void show_invites(int sock)
 
   for (int i = 0; i < num_pending_invites; ++i)
   {
-    printf("Pending invite for Group ID: %d | Group name: %s\n", grp_invites[i].group_id, grp_invites[i].name);
+    printf("\tPending invite for Group ID: %d | Group name: %s\n", grp_invites[i].group_id, grp_invites[i].name);
   }
 }
 
@@ -283,6 +274,26 @@ void write_group(int sock)
   send_data(sock, (void *)&msg, sizeof(msg));
 
   receive_ACK(sock);
+}
+
+void show_messages_signal_handler(int signal_number)
+{
+  char inp[25];
+  memset(inp, '\0', sizeof(inp));
+
+  receive_data(socket_fd, inp, sizeof(inp));
+
+  if(strcmp(inp, "/show_messages") == 0) {
+    send_data(socket_fd, "/show_messages", strlen("/show_messages"));
+    show_messages(socket_fd);
+  }
+  else if(strcmp(inp, "/show_invites") == 0) {
+    send_data(socket_fd, inp, strlen(inp));
+    show_invites(socket_fd);
+  }
+  printf("--------------\n");
+  printf("Command: ");
+  fflush(stdout);
 }
 
 int evaluate_inp_cmd(int sock, char *inp)
