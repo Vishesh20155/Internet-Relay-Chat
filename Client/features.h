@@ -81,8 +81,14 @@ void show_messages(int sock)
   // Print received messages
   for (int i = 0; i < num_msgs; ++i)
   {
-    
-    printf("\tMessage from %s : %s\n", pending_msgs[i].sender_name, pending_msgs[i].content);
+    if(pending_msgs[i].grp_id == -1)
+    {
+      printf("\tMessage from %s : %s\n", pending_msgs[i].sender_name, pending_msgs[i].content);
+    }
+    else
+    {
+      printf("\tMessage in group %d from %s : %s\n", pending_msgs[i].grp_id, pending_msgs[i].sender_name, pending_msgs[i].content);
+    }
   }
 }
 
@@ -233,6 +239,38 @@ void send_public_key(int sock)
   printf("%s\n", resp);
 }
 
+void write_group(int sock)
+{
+  receive_ACK(sock);
+
+  printf("\tGroup ID: ");
+  int gid;
+  scanf("%d", &gid);
+
+  printf("\tMessage: ");
+  char inp_message[BUFFER_SIZE];
+  getchar();
+  memset(inp_message, '\0', BUFFER_SIZE);
+  if (fgets(inp_message, BUFFER_SIZE, stdin) != NULL)
+  {
+    printf("\tInput message: %s", inp_message);
+  }
+  else
+  {
+    printf("\tError reading input.\n");
+  }
+
+  struct message_struct msg;
+  msg.grp_id = gid;
+  memset(msg.content, '\0', sizeof(msg.content));
+  memset(msg.sender_name, '\0', sizeof(msg.sender_name));
+  strcpy(msg.content, inp_message);
+
+  send_data(sock, (void *)&msg, sizeof(msg));
+
+  receive_ACK(sock);
+}
+
 int evaluate_inp_cmd(int sock, char *inp)
 {
   if (strcmp(inp, "/exit") == 0)
@@ -278,6 +316,10 @@ int evaluate_inp_cmd(int sock, char *inp)
   else if (strcmp(inp, "/init_group_dhxchg") == 0)
   {
     init_group_dhxchg(sock);
+  }
+  else if (strcmp(inp, "/write_group") == 0)
+  {
+    write_group(sock);
   }
   else
   {

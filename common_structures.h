@@ -19,7 +19,7 @@
 
 #define NUM_USERS 10
 #define MAX_LOGGED_IN_USERS 10
-#define MAX_MSG_QUEUE_LEN 10
+#define MAX_MSG_QUEUE_LEN 40
 #define MAX_NUM_GRPS 10
 
 #define KDC_PORT 12345
@@ -90,6 +90,7 @@ struct logged_in_user_struct
 
 struct message_struct {
   char sender_name[UNAME_LEN], content[BUFFER_SIZE];
+  int grp_id;
 };
 
 struct group_struct

@@ -76,6 +76,7 @@ void broadcast_message_to_logged_in(int sock, char *curr_username, int curr_user
 
     strcpy(pending_msgs[receiver_uid][q_len].sender_name, curr_username);
     strcpy(pending_msgs[receiver_uid][q_len].content, message.content);
+    pending_msgs[receiver_uid][q_len].grp_id = -1;
     num_pending_msgs[receiver_uid]++;
   }
   pthread_mutex_unlock(&mutex_log_in);
@@ -359,6 +360,39 @@ void supply_public_key(int sock, int uid, char *pub_key)
   strcpy(resp, "Sent public key successfully");
 }
 
+void broadcast_to_grp(int sock, int uid, char *uname)
+{
+  send_ACK(sock);
+  struct message_struct message;
+
+  receive_data(sock, (void *)&message, sizeof(message));
+  send_ACK(sock);
+
+  int grp_id = message.grp_id;
+  strcpy(message.sender_name, uname);
+
+  pthread_mutex_lock(&mutex_log_in);
+  pthread_mutex_lock(&mutex_grp);
+  struct group_struct curr_grp = all_groups[grp_id];
+  
+  for(int i=0; i<curr_grp.num_members; ++i)
+  {
+    int grp_mem = curr_grp.users[i];
+    if(grp_mem == uid) continue;
+    int q_len = num_pending_msgs[grp_mem];
+    if (q_len >= MAX_MSG_QUEUE_LEN)
+    {
+      printf("Pending message queue length full for client: %s\n", logged_in_user_list[i].username);
+      continue;
+    }
+
+    memcpy((void*)&(pending_msgs[grp_mem][q_len]), (void *)&message, sizeof(message));
+    num_pending_msgs[grp_mem]++;
+  }
+  pthread_mutex_unlock(&mutex_grp);
+  pthread_mutex_unlock(&mutex_log_in);
+}
+
 int handle_cmd(int sock, char *inp, char *curr_username, int curr_user_id, char *public_key)
 {
   if (strcmp(inp, "/exit") == 0)
@@ -404,6 +438,10 @@ int handle_cmd(int sock, char *inp, char *curr_username, int curr_user_id, char 
   else if (strcmp(inp, "/init_group_dhxchg") == 0)
   {
     // initiate_DHKE(sock, curr_user_id, dh);
+  }
+  else if (strcmp(inp, "/write_group") == 0)
+  {
+    broadcast_to_grp(sock, curr_user_id, curr_username);
   }
   else
   {
