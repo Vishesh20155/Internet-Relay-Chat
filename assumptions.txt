@@ -8,3 +8,7 @@
 * init_group can be called by the creator of the group
 
 * Atleast 2 members in the group for calling init
+
+* No group existence checks in /write_group
+
+* init_dhxchg only once

@@ -91,7 +91,31 @@ void show_messages(int sock)
     }
     else
     {
-      printf("\tMessage in group %d from %s : %s\n", pending_msgs[i].grp_id, pending_msgs[i].sender_name, pending_msgs[i].content);
+      send_ACK(sock);
+      struct group_struct grp_details;
+      receive_data(sock, (void *)&grp_details, sizeof(grp_details));
+      // printf("@@@ %d ki AES key length for decryption: %ld\n", grp_details.group_id, strlen(grp_details.shared_aes_key));
+      if (strlen(grp_details.shared_aes_key) != 32)
+      {
+        printf("\tMessage in group %d from %s : %s\n", pending_msgs[i].grp_id, pending_msgs[i].sender_name, pending_msgs[i].content);
+      }
+      else
+      {
+        EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+        unsigned char iv[16] = {0}; // Fixed IV for simplicity
+        EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, grp_details.shared_aes_key, iv);
+
+        int len, plaintext_len;
+        unsigned char decrypted_message[BUFFER_SIZE];
+        EVP_DecryptUpdate(ctx, decrypted_message, &len, pending_msgs[i].content, strlen(pending_msgs[i].content));
+        plaintext_len = len;
+
+        EVP_DecryptFinal_ex(ctx, decrypted_message + len, &len);
+        plaintext_len += len;
+
+        decrypted_message[plaintext_len] = '\0';
+        printf("\tDecrypted Message in group %d from %s : %s\n", pending_msgs[i].grp_id, pending_msgs[i].sender_name, decrypted_message);
+      }
     }
   }
 }
@@ -195,9 +219,9 @@ void group_invite_accept(int sock)
 }
 
 // compute_DH_key(sock, shared_secret, curr_uid, pub_keys, grp_details);
-void compute_DH_key(int sock, int uid, unsigned char shared_key[SHARED_SECRET_LEN+1], char pub_keys[NUM_USERS][DH_PUB_KEY_LEN+1], struct group_struct grp_details)
+void compute_DH_key(int sock, int uid, unsigned char shared_key[SHARED_SECRET_LEN + 1], char pub_keys[NUM_USERS][DH_PUB_KEY_LEN + 1], struct group_struct grp_details)
 {
-  memset(shared_key, '\0', SHARED_SECRET_LEN+1);
+  memset(shared_key, '\0', SHARED_SECRET_LEN + 1);
   int grp_mem_uid = grp_details.users[1];
 
   BIGNUM *server_pub_key = NULL;
@@ -206,11 +230,11 @@ void compute_DH_key(int sock, int uid, unsigned char shared_key[SHARED_SECRET_LE
 
   // Hash the shared secret to derive an AES key
   unsigned char aes_key[32]; // AES-256 key
-  EVP_Digest(shared_key, sizeof(shared_key), aes_key, NULL, EVP_sha256(), NULL);
-  // printf("Length of AES key: %ld\n", strlen(aes_key));
-  send_data(sock, aes_key, sizeof(aes_key));
-  
-  printf("Derived and communicated the shared key to everyone in the group\n");
+  EVP_Digest(shared_key, SHARED_SECRET_LEN, aes_key, NULL, EVP_sha256(), NULL);
+  printf("### Length of AES key: %ld\n", strlen(aes_key));
+  send_data(sock, aes_key, 32);
+
+  printf("\tDerived and communicated the shared key to everyone in the group\n");
 
   receive_ACK(sock);
 }
@@ -246,28 +270,30 @@ void init_group_dhxchg(int sock)
   struct group_struct grp_details;
   receive_data(sock, (void *)(&grp_details), sizeof(grp_details));
 
-  printf("Number of members in the group: %d\n", grp_details.num_members);
+  // printf("\tNumber of members in the group: %d\n", grp_details.num_members);
 
-  if(grp_details.num_members <= 1) {
+  if (grp_details.num_members <= 1)
+  {
     printf("\tThere should be atleast 2 members in the group!\n");
     return;
   }
 
   // Get public keys of all the users
   send_ACK(sock);
-  char pub_keys[NUM_USERS][DH_PUB_KEY_LEN+1];
-  for(int i=0; i<NUM_USERS; ++i) {
+  char pub_keys[NUM_USERS][DH_PUB_KEY_LEN + 1];
+  for (int i = 0; i < NUM_USERS; ++i)
+  {
     memset(pub_keys[i], '\0', sizeof(pub_keys[i]));
   }
 
   receive_data(sock, pub_keys, sizeof(pub_keys));
 
-  // Call this function to send encrypted g^A 
-  // to all the group members for 
+  // Call this function to send encrypted g^A
+  // to all the group members for
   // Diffie Hellman process to take place
   // encrypt_and_send(grp_details, pub_keys);
 
-  unsigned char shared_secret[SHARED_SECRET_LEN];  // Contains the key that will actually be used for encryption
+  unsigned char shared_secret[SHARED_SECRET_LEN]; // Contains the key that will actually be used for encryption
 
   int curr_uid = grp_details.users[0];
   // Get the key from all the members
@@ -328,6 +354,18 @@ void write_group(int sock)
   int gid;
   scanf("%d", &gid);
 
+  unsigned char *encryption_key = NULL;
+  struct message_struct empty_msg;
+  empty_msg.grp_id = gid;
+  send_data(sock, (void *)&empty_msg, sizeof(empty_msg));
+  struct group_struct grp_details;
+  receive_data(sock, (void *)&grp_details, sizeof(grp_details));
+
+  if (strlen(grp_details.shared_aes_key) == 32)
+  {
+    encryption_key = grp_details.shared_aes_key;
+  }
+
   printf("\tMessage: ");
   char inp_message[BUFFER_SIZE];
   getchar();
@@ -344,8 +382,32 @@ void write_group(int sock)
   struct message_struct msg;
   msg.grp_id = gid;
   memset(msg.content, '\0', sizeof(msg.content));
+  // encrypt the message here
+  if (encryption_key == NULL)
+  {
+    printf("\n\t!! Encryption key not yet set, sending message in plain text !!\n");
+    strcpy(msg.content, inp_message);
+  }
+  else
+  {
+    // printf("Length of encryption key: %ld\n", strlen(encryption_key));
+    unsigned char iv[16] = {0};
+    unsigned char encrypted_message[BUFFER_SIZE];
+    memset(encrypted_message, '\0', BUFFER_SIZE);
+
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, encryption_key, iv);
+
+    int len, ciphertext_len;
+    EVP_EncryptUpdate(ctx, encrypted_message, &len, (unsigned char *)inp_message, strlen(inp_message));
+    ciphertext_len = len;
+
+    EVP_EncryptFinal_ex(ctx, encrypted_message + len, &len);
+    ciphertext_len += len;
+
+    strcpy(msg.content, encrypted_message);
+  }
   memset(msg.sender_name, '\0', sizeof(msg.sender_name));
-  strcpy(msg.content, inp_message);
 
   send_data(sock, (void *)&msg, sizeof(msg));
 

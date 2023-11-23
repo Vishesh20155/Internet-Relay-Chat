@@ -108,15 +108,23 @@ void send_pending_messages(int sock, char *curr_username, int curr_user_id)
   int data_len = num_msgs * sizeof(struct message_struct);
 
   pthread_mutex_lock(&mutex_log_in);
+  pthread_mutex_lock(&mutex_grp);
 
   send_data(sock, pending_msgs[curr_user_id], data_len);
+
   for (int i = 0; i < num_msgs; ++i)
   {
+    if(pending_msgs[curr_user_id][i].grp_id != -1) {
+      receive_ACK(sock);
+      int gid = pending_msgs[curr_user_id][i].grp_id;
+      send_data(sock, (void*)&all_groups[gid], sizeof(struct group_struct));
+    }
     memset(pending_msgs[curr_user_id][i].content, '\0', sizeof(pending_msgs[curr_user_id][i].content));
     memset(pending_msgs[curr_user_id][i].sender_name, '\0', sizeof(pending_msgs[curr_user_id][i].sender_name));
   }
   num_pending_msgs[curr_user_id] = 0;
 
+  pthread_mutex_unlock(&mutex_grp);
   pthread_mutex_unlock(&mutex_log_in);
 }
 
@@ -355,7 +363,12 @@ void initiate_DHKE(int sock, int uid)
   send_data(sock, all_public_keys_hex, sizeof(all_public_keys_hex));
   pthread_mutex_unlock(&mutex_dh);
 
-  receive_data(sock, all_groups[gid].shared_aes_key, sizeof(all_groups[gid].shared_aes_key));
+  unsigned char aes_key[33];
+  memset(aes_key, '\0', 33);
+  receive_data(sock, aes_key, 32);
+  // printf("###Length of AES key received: %ld\n", strlen(aes_key));
+  memset(all_groups[gid].shared_aes_key, '\0', 33);
+  strcpy(all_groups[gid].shared_aes_key, aes_key);
   pthread_mutex_unlock(&mutex_grp);
   send_ACK(sock);
 }
@@ -431,7 +444,13 @@ void supply_public_key(int sock, int uid, char *pub_key)
 void broadcast_to_grp(int sock, int uid, char *uname)
 {
   send_ACK(sock);
-  struct message_struct message;
+  struct message_struct message, empty_msg;
+
+  receive_data(sock, (void *)&empty_msg, sizeof(empty_msg));
+  int req_gid = empty_msg.grp_id;
+  pthread_mutex_lock(&mutex_grp);
+  send_data(sock, (void *)(&all_groups[req_gid]), sizeof(struct group_struct));
+  pthread_mutex_unlock(&mutex_grp);
 
   receive_data(sock, (void *)&message, sizeof(message));
   send_ACK(sock);

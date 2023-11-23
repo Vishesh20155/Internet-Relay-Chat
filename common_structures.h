@@ -101,7 +101,7 @@ struct group_struct
   int group_id, num_members;
   char name[GRP_NAME_LEN];
   int users[NUM_USERS];
-  unsigned char shared_aes_key[32];
+  unsigned char shared_aes_key[33];
 };
 
 struct group_invite
