@@ -1,6 +1,8 @@
 #include "../common_structures.h"
 
 int socket_fd;
+char client_pvt_key[DH_PRIV_KEY_LEN + 1];
+DH *curr_dh;
 
 /*Function to show the list of commands available to the users*/
 void show_menu()
@@ -192,20 +194,94 @@ void group_invite_accept(int sock)
   printf("\t%s\n", resp);
 }
 
+// compute_DH_key(sock, shared_secret, curr_uid, pub_keys, grp_details);
+void compute_DH_key(int sock, int uid, unsigned char shared_key[SHARED_SECRET_LEN+1], char pub_keys[NUM_USERS][DH_PUB_KEY_LEN+1], struct group_struct grp_details)
+{
+  memset(shared_key, '\0', SHARED_SECRET_LEN+1);
+  int grp_mem_uid = grp_details.users[1];
+
+  BIGNUM *server_pub_key = NULL;
+  BN_hex2bn(&server_pub_key, pub_keys[grp_mem_uid]);
+  DH_compute_key(shared_key, server_pub_key, curr_dh);
+
+  // Hash the shared secret to derive an AES key
+  unsigned char aes_key[32]; // AES-256 key
+  EVP_Digest(shared_key, sizeof(shared_key), aes_key, NULL, EVP_sha256(), NULL);
+  // printf("Length of AES key: %ld\n", strlen(aes_key));
+  send_data();
+  
+  printf("Derived and communicated the shared key to everyone in the group\n");
+
+  receive_ACK(sock);
+}
+
 void init_group_dhxchg(int sock)
 {
-  // receive_ACK();
+  printf("Client private key (%ld): %s\n", strlen(client_pvt_key), client_pvt_key);
 
-  // printf("\tGroup ID: ");
-  // int gid;
-  // scanf("%d", &gid);
+  receive_ACK(sock);
 
-  // char gid_str[10];
-  // memset(gid_str, '\0', 10);
-  // sprintf(gid_str, "%d", gid);
+  char gid_str[10];
+  memset(gid_str, '\0', 10);
+  int gid;
 
-  // send_data(sock, gid_str, strlen(gid_str));
-  printf("UNIMPLEMENTED\n");
+  printf("\tGroup ID: ");
+  scanf("%d", &gid);
+
+  sprintf(gid_str, "%d", gid);
+  send_data(sock, gid_str, sizeof(gid_str));
+
+  // Get the group details
+  char resp[BUFFER_SIZE];
+  memset(resp, '\0', strlen(resp));
+  receive_data(sock, resp, sizeof(resp));
+
+  if (strcmp(resp, "Success") != 0)
+  {
+    printf("%s\n", resp);
+    return;
+  }
+
+  send_ACK(sock);
+  struct group_struct grp_details;
+  receive_data(sock, (void *)(&grp_details), sizeof(grp_details));
+
+  printf("Number of members in the group: %d\n", grp_details.num_members);
+
+  if(grp_details.num_members <= 1) {
+    printf("\tThere should be atleast 2 members in the group!\n");
+    return;
+  }
+
+  // Get public keys of all the users
+  send_ACK(sock);
+  char pub_keys[NUM_USERS][DH_PUB_KEY_LEN+1];
+  for(int i=0; i<NUM_USERS; ++i) {
+    memset(pub_keys[i], '\0', sizeof(pub_keys[i]));
+  }
+
+  receive_data(sock, pub_keys, sizeof(pub_keys));
+
+  // Call this function to send encrypted g^A 
+  // to all the group members for 
+  // Diffie Hellman process to take place
+  // encrypt_and_send(grp_details, pub_keys);
+
+  unsigned char shared_secret[SHARED_SECRET_LEN];  // Contains the key that will actually be used for encryption
+
+  int curr_uid = grp_details.users[0];
+  // Get the key from all the members
+  // Decrypt that
+  // Check the HMAC hash
+  // char prev_shared_key[SHARED_SECRET_LEN];  // This is the key that will be used for HMAC key
+  // strcpy(prev_shared_key, pub_keys[curr_uid]);
+  // for(all group members){
+  //   verify_and_decrypt(pub_keys, prev_shared_key, shared_secret);
+  //   strcpy(prev_shared_key, shared_secret);
+  // }
+
+  // Function to compute the final key
+  compute_DH_key(sock, curr_uid, shared_secret, pub_keys, grp_details);
 }
 
 void request_public_key(int sock)
@@ -283,11 +359,13 @@ void show_messages_signal_handler(int signal_number)
 
   receive_data(socket_fd, inp, sizeof(inp));
 
-  if(strcmp(inp, "/show_messages") == 0) {
+  if (strcmp(inp, "/show_messages") == 0)
+  {
     send_data(socket_fd, "/show_messages", strlen("/show_messages"));
     show_messages(socket_fd);
   }
-  else if(strcmp(inp, "/show_invites") == 0) {
+  else if (strcmp(inp, "/show_invites") == 0)
+  {
     send_data(socket_fd, inp, strlen(inp));
     show_invites(socket_fd);
   }
@@ -376,6 +454,12 @@ void input_command(int sock)
 
   const BIGNUM *pvt_key = DH_get0_priv_key(dh);
   char *hex_pvt_key = BN_bn2hex(pvt_key);
+
+  printf("Client private key (%ld): %s\n", strlen(hex_pvt_key), hex_pvt_key);
+
+  memset(client_pvt_key, '\0', sizeof(client_pvt_key));
+  strcpy(client_pvt_key, hex_pvt_key);
+  curr_dh = dh;
   receive_ACK(sock);
 
   // Send the PID as well

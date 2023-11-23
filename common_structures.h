@@ -39,6 +39,8 @@
 #define CMD_LEN 100
 #define DH_PUB_KEY_LEN 512
 #define DH_SHARED_KEY_LEN 256
+#define DH_PRIV_KEY_LEN 64
+#define SHARED_SECRET_LEN 256
 
 unsigned char *random_key = (unsigned char *)"01234567890123456789012345678901";
 
@@ -99,6 +101,7 @@ struct group_struct
   int group_id, num_members;
   char name[GRP_NAME_LEN];
   int users[NUM_USERS];
+  unsigned char shared_aes_key[32];
 };
 
 struct group_invite

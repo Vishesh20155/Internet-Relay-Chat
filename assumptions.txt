@@ -1,0 +1,10 @@
+* 'initiate_group' when the group is freezed
+* call initiate grpxchange just once
+
+* No error checking for groups
+
+* public key can be requested only to logged in users
+
+* init_group can be called by the creator of the group
+
+* Atleast 2 members in the group for calling init

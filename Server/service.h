@@ -136,6 +136,7 @@ void create_new_group(int sock, int user_id)
     all_groups[num_grps_created].group_id = num_grps_created;
     all_groups[num_grps_created].users[0] = user_id;
     all_groups[num_grps_created].num_members = 1;
+    memset(all_groups[num_grps_created].shared_aes_key, '\0', sizeof(all_groups[num_grps_created].shared_aes_key));
     memset(all_groups[num_grps_created].name, '\0', sizeof(all_groups[num_grps_created].name));
     strcpy(all_groups[num_grps_created].name, grp_name);
     group_user_status[num_grps_created][user_id] = 2;
@@ -196,15 +197,18 @@ void send_grp_invite(int sock, int uid)
 
   int invitee_sock_fd = -1;
   pthread_mutex_lock(&mutex_log_in);
-  for(int i=0; i<num_logged_in_users; ++i) {
-    if(logged_in_user_list[i].user_id == inv.invitee_uid) {
+  for (int i = 0; i < num_logged_in_users; ++i)
+  {
+    if (logged_in_user_list[i].user_id == inv.invitee_uid)
+    {
       invitee_sock_fd = logged_in_user_list[i].sock_fd;
       break;
     }
   }
   pthread_mutex_unlock(&mutex_log_in);
 
-  if(invitee_sock_fd != -1){
+  if (invitee_sock_fd != -1)
+  {
     send_data(invitee_sock_fd, "/show_invites", strlen("/show_invites"));
     if (kill(all_pids[inv.invitee_uid], SIGUSR1) == -1)
     {
@@ -301,27 +305,59 @@ void accept_invitation(int sock, int uid)
   show_all_groups();
 }
 
-void initiate_DHKE(int sock, int uid, DH *dh)
+void initiate_DHKE(int sock, int uid)
 {
+  send_ACK(sock);
   // Receive the group ID
-  // char gid_str[10];
-  // memset(gid_str, '\0', 10);
-  // receive_data(sock, gid_str, sizeof(gid_str));
+  char gid_str[10];
+  memset(gid_str, '\0', 10);
+  receive_data(sock, gid_str, sizeof(gid_str));
 
-  // int gid = atoi(gid_str);
+  int gid = atoi(gid_str);
 
-  // pthread_mutex_lock(&mutex_grp);
+  pthread_mutex_lock(&mutex_grp);
 
-  // if(gid >= num_grps_created) // check validity of group id
-  // {
-  //   strcpy(resp, "Invalid Group ID entered");
-  // }
-  // else if(all_groups[gid].users[0] != uid) // check if owner of group or not
-  // {
-  //   strcpy(resp, "You not the creator of this group");
-  // }
+  char resp[BUFFER_SIZE];
+  memset(resp, '\0', strlen(resp));
 
-  // pthread_mutex_unlock(&mutex_grp);
+  if (gid >= num_grps_created) // check validity of group id
+  {
+    strcpy(resp, "Invalid Group ID entered");
+  }
+  else if (all_groups[gid].users[0] != uid) // check if owner of group or not
+  {
+    strcpy(resp, "You not the creator of this group");
+  }
+  else
+  {
+    strcpy(resp, "Success");
+  }
+
+  send_data(sock, resp, strlen(resp));
+
+  if (strcmp(resp, "Success") != 0)
+  {
+    pthread_mutex_unlock(&mutex_grp);
+    return; 
+  }
+
+  receive_ACK(sock);
+  send_data(sock, (void *)&(all_groups[gid]), sizeof(struct group_struct));
+
+  if(all_groups[gid].num_members <= 1) {
+    pthread_mutex_unlock(&mutex_grp);
+    return; 
+  }
+
+  // Return the public keys of the members
+  receive_ACK(sock);
+  pthread_mutex_lock(&mutex_dh);
+  send_data(sock, all_public_keys_hex, sizeof(all_public_keys_hex));
+  pthread_mutex_unlock(&mutex_dh);
+
+  receive_data(sock, all_groups[gid].shared_aes_key, sizeof(all_groups[gid].shared_aes_key));
+  pthread_mutex_unlock(&mutex_grp);
+  send_ACK(sock);
 }
 
 void create_public_key_request(int sock, int uid)
@@ -422,13 +458,16 @@ void broadcast_to_grp(int sock, int uid, char *uname)
     memcpy((void *)&(pending_msgs[grp_mem][q_len]), (void *)&message, sizeof(message));
 
     int receiver_sock_fd = -1;
-    for(int j=0; j<num_logged_in_users; ++j){
-      if(logged_in_user_list[j].user_id == grp_mem) {
+    for (int j = 0; j < num_logged_in_users; ++j)
+    {
+      if (logged_in_user_list[j].user_id == grp_mem)
+      {
         receiver_sock_fd = logged_in_user_list[j].sock_fd;
       }
     }
 
-    if(receiver_sock_fd != -1){
+    if (receiver_sock_fd != -1)
+    {
       send_data(receiver_sock_fd, "/show_messages", strlen("/show_messages"));
       if (kill(all_pids[grp_mem], SIGUSR1) == -1)
       {
@@ -486,7 +525,7 @@ int handle_cmd(int sock, char *inp, char *curr_username, int curr_user_id, char 
   }
   else if (strcmp(inp, "/init_group_dhxchg") == 0)
   {
-    // initiate_DHKE(sock, curr_user_id, dh);
+    initiate_DHKE(sock, curr_user_id);
   }
   else if (strcmp(inp, "/write_group") == 0)
   {
