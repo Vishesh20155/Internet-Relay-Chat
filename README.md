@@ -35,6 +35,10 @@ I faced a stack smashing error on using the encrypted ticket inside another stru
 
 The resolution was by sufficiently increasing the size of the buffers so that there can be clear demarkation between the fields inside the structure.
 
+### 4. DOS prevention
+
+I have put a limit to the number of users and the number of groups that can be supported concurrentl. Even the number of messages have an upper limit.
+
 
 The following are the other preventions that have made the IRC system more robust to attacks:
 
