@@ -196,13 +196,14 @@ void show_invites(int sock)
   }
 }
 
-void encrypt_dh_1(char *key, char *content, char *ciphertext) {
+void encrypt_dh_1(char *key, char *content, char *ciphertext)
+{
   strncpy(ciphertext, "Encrypted text", strlen("Encrypted text"));
 }
 
-void send_to(int target_uid, char *ciphertext) {
+void send_to(int target_uid, char *ciphertext)
+{
   int target_sock_fd = target_uid;
-
 }
 
 void group_invite_accept(int sock)
@@ -231,11 +232,11 @@ void encrypt_and_send(struct group_struct grp_details, char pub_keys[NUM_USERS][
 {
   int owner_id = grp_details.users[0];
   char cipher_text[BUFFER_SIZE];
-  for(int i=1; i<grp_details.num_members; ++i)
+  for (int i = 1; i < grp_details.num_members; ++i)
   {
     int target_uid = grp_details.users[i];
     char *encryption_key = pub_keys[target_uid];
-    
+
     memset(cipher_text, '\0', BUFFER_SIZE);
     encrypt_dh_1(encryption_key, pub_keys[owner_id], cipher_text);
     send_to(target_uid, cipher_text);
@@ -261,6 +262,62 @@ void compute_DH_key(int sock, int uid, unsigned char shared_key[SHARED_SECRET_LE
   printf("\tDerived and communicated the shared key to everyone in the group\n");
 
   receive_ACK(sock);
+}
+
+bool verify_key(char *shared_secret)
+{
+  unsigned char *hmac = malloc(EVP_MAX_MD_SIZE);
+  unsigned int computed_hmac_len;
+
+  HMAC_CTX *hmac_ctx = HMAC_CTX_new();
+  HMAC_Init_ex(hmac_ctx, shared_secret, strlen(shared_secret), EVP_sha256(), NULL);
+  HMAC_Update(hmac_ctx, "message", 10);
+  HMAC_Final(hmac_ctx, hmac, &computed_hmac_len);
+
+  bool is_valid = (strcmp(hmac, hmac) == 0);
+
+  HMAC_CTX_free(hmac_ctx);
+  free(hmac);
+
+  return is_valid;
+}
+
+void decrypt_key(char *key)
+{
+  EVP_CIPHER_CTX *ctx;
+  int len;
+  int plaintext_len;
+
+  if (!(ctx = EVP_CIPHER_CTX_new()))
+  {
+    ERR_print_errors_fp(stderr);
+    pthread_exit(0);
+  }
+
+  if (1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, "key", NULL))
+  {
+    ERR_print_errors_fp(stderr);
+    EVP_CIPHER_CTX_free(ctx);
+    pthread_exit(0);
+  }
+
+  if (1 != EVP_DecryptUpdate(ctx, "plaintext", &len, "ciphertext", 11))
+  {
+    ERR_print_errors_fp(stderr);
+    EVP_CIPHER_CTX_free(ctx);
+    pthread_exit(0);
+  }
+  plaintext_len = len;
+
+  // Clean up
+  EVP_CIPHER_CTX_free(ctx);
+}
+
+// verify_and_decrypt(pub_keys, prev_shared_key, shared_secret);
+bool verify_and_decrypt(char pub_keys[NUM_USERS][DH_PUB_KEY_LEN + 1], char *prev_shared_key, char *shared_secret)
+{
+  decrypt_key(shared_secret);
+  bool auth = verify_key(shared_secret);
 }
 
 void init_group_dhxchg(int sock)
@@ -323,12 +380,14 @@ void init_group_dhxchg(int sock)
   // Get the key from all the members
   // Decrypt that
   // Check the HMAC hash
-  // char prev_shared_key[SHARED_SECRET_LEN];  // This is the key that will be used for HMAC key
-  // strcpy(prev_shared_key, pub_keys[curr_uid]);
-  // for(all group members){
-  //   verify_and_decrypt(pub_keys, prev_shared_key, shared_secret);
-  //   strcpy(prev_shared_key, shared_secret);
-  // }
+  char prev_shared_key[SHARED_SECRET_LEN]; // This is the key that will be used for HMAC key
+  strcpy(prev_shared_key, pub_keys[curr_uid]);
+
+  for (int i1 = 0; i1 < grp_details.num_members; ++i1)
+  {
+    verify_and_decrypt(pub_keys, prev_shared_key, shared_secret);
+    strcpy(prev_shared_key, shared_secret);
+  }
 
   // Function to compute the final key
   compute_DH_key(sock, curr_uid, shared_secret, pub_keys, grp_details);

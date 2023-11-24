@@ -17,6 +17,7 @@
 #include <openssl/err.h>
 #include <openssl/dh.h>
 #include <openssl/bn.h>
+#include <openssl/hmac.h>
 
 #define NUM_USERS 10
 #define MAX_LOGGED_IN_USERS 10
