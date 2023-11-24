@@ -23,7 +23,7 @@ The following are the major vulnerabilities that have been handled and can easil
 
 ### 1. Buffer Overflow
 
-This has been prevented by using `strncpy` instead of `strcpy` by defining the max size of copying that is done. Also the size of the inputs is checked to ensure that they are not of very large size that may cause buffer overflow. Most of the initializations have been static with pre-defined buffer size and  in other places there is proper size-controlled use of `malloc`.
+This has been prevented by using `strncpy` instead of `strcpy` by defining the max size of copying that is done. Also the size of the inputs is checked to ensure that they are not of very large size that may cause buffer overflow. Done using `%30s`. Also, most of the initializations have been static with pre-defined buffer size and  in other places there is proper size-controlled use of `malloc`.
 
 ### 2. Brute Forced Authentication
 

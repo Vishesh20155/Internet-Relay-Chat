@@ -43,12 +43,32 @@ int main(int argc, char const *argv[])
   struct server_args kdc_server = {KDC_PORT, KDC_SERVER}, chat_server = {CHAT_PORT, CHAT_SERVER};
 
   char username[UNAME_LEN], password[PASSWORD_LEN];
-  
-  printf("Username: ");
-  scanf("%s", username);
 
-  printf("Password: ");
-  scanf("%s", password);
+  int num_fail_attempts = 0;
+  bool pass_auth = false;
+  while((!pass_auth) && num_fail_attempts < 3){
+  
+    memset(username, '\0', UNAME_LEN);
+    printf("Username: ");
+    scanf("%30s", username);
+
+    memset(password, '\0', PASSWORD_LEN);
+    printf("Password: ");
+    scanf("%30s", password);
+
+    if(strcmp(username, password) == 0) {
+      pass_auth = true;
+    }
+    else{
+      printf("Invalid authentication. Try again!\n\n");
+      num_fail_attempts++;
+    }
+  }
+
+  if(!pass_auth) {
+    printf("Could not authenticate thrice!!\n");
+    exit(EXIT_FAILURE);
+  }
 
   srand(time(0));
 

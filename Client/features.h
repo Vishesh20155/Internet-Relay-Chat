@@ -126,7 +126,7 @@ void create_group(int sock)
   char grp_name[GRP_NAME_LEN];
   memset(grp_name, '\0', GRP_NAME_LEN);
   printf("\tGroup Name: ");
-  scanf("%s", grp_name);
+  scanf("%30s", grp_name);
   send_data(sock, grp_name, strlen(grp_name));
 
   char grp_id_str[10];
@@ -197,7 +197,7 @@ void show_invites(int sock)
 }
 
 void encrypt_dh_1(char *key, char *content, char *ciphertext) {
-  strcpy(ciphertext, "Encrypted text");
+  strncpy(ciphertext, "Encrypted text", strlen("Encrypted text"));
 }
 
 void send_to(int target_uid, char *ciphertext) {
@@ -340,7 +340,7 @@ void request_public_key(int sock)
   char inp_uname[UNAME_LEN];
   memset(inp_uname, '\0', UNAME_LEN);
   printf("Username: ");
-  scanf("%s", inp_uname);
+  scanf("%30s", inp_uname);
 
   send_data(sock, inp_uname, strlen(inp_uname));
 
@@ -571,7 +571,7 @@ void input_command(int sock)
   {
     memset(inp_cmd, '\0', CMD_LEN);
     printf("Command: ");
-    scanf("%s", inp_cmd);
+    scanf("%30s", inp_cmd);
 
     send_data(sock, inp_cmd, strlen(inp_cmd));
 
