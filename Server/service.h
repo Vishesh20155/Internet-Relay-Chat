@@ -114,10 +114,11 @@ void send_pending_messages(int sock, char *curr_username, int curr_user_id)
 
   for (int i = 0; i < num_msgs; ++i)
   {
-    if(pending_msgs[curr_user_id][i].grp_id != -1) {
+    if (pending_msgs[curr_user_id][i].grp_id != -1)
+    {
       receive_ACK(sock);
       int gid = pending_msgs[curr_user_id][i].grp_id;
-      send_data(sock, (void*)&all_groups[gid], sizeof(struct group_struct));
+      send_data(sock, (void *)&all_groups[gid], sizeof(struct group_struct));
     }
     memset(pending_msgs[curr_user_id][i].content, '\0', sizeof(pending_msgs[curr_user_id][i].content));
     memset(pending_msgs[curr_user_id][i].sender_name, '\0', sizeof(pending_msgs[curr_user_id][i].sender_name));
@@ -346,15 +347,16 @@ void initiate_DHKE(int sock, int uid)
   if (strcmp(resp, "Success") != 0)
   {
     pthread_mutex_unlock(&mutex_grp);
-    return; 
+    return;
   }
 
   receive_ACK(sock);
   send_data(sock, (void *)&(all_groups[gid]), sizeof(struct group_struct));
 
-  if(all_groups[gid].num_members <= 1) {
+  if (all_groups[gid].num_members <= 1)
+  {
     pthread_mutex_unlock(&mutex_grp);
-    return; 
+    return;
   }
 
   // Return the public keys of the members
@@ -381,16 +383,17 @@ void create_public_key_request(int sock, int uid)
   receive_data(sock, inp_uname, sizeof(inp_uname));
 
   pthread_mutex_lock(&mutex_log_in);
-  int found = 0;
+  int found = 0, target_uid = -1, dest_sock_fd = -1;
   for (int i = 0; i < num_logged_in_users; ++i)
   {
     if (strcmp(inp_uname, logged_in_user_list[i].username) == 0)
     {
       found = 1;
+      target_uid = logged_in_user_list[i].user_id;
+      dest_sock_fd = logged_in_user_list[i].sock_fd;
       break;
     }
   }
-  pthread_mutex_unlock(&mutex_log_in);
 
   char resp[BUFFER_SIZE];
   memset(resp, '\0', sizeof(resp));
@@ -401,8 +404,14 @@ void create_public_key_request(int sock, int uid)
   }
   else
   {
+    send_data(dest_sock_fd, "/request_public_key", strlen("/request_public_key"));
+    if (kill(all_pids[target_uid], SIGUSR1) == -1)
+    {
+      perror("Error sending signal");
+    }
     strcpy(resp, "Requested the user for public key");
   }
+  pthread_mutex_unlock(&mutex_log_in);
   send_data(sock, resp, strlen(resp));
 }
 
@@ -438,7 +447,9 @@ void supply_public_key(int sock, int uid, char *pub_key)
   pthread_mutex_lock(&mutex_dh);
   strcpy(all_public_keys_hex[uid], pub_key);
   pthread_mutex_unlock(&mutex_dh);
-  strcpy(resp, "Sent public key successfully");
+  // strcpy(resp, "Sent public key successfully");
+  sprintf(resp, "Sent public key: %s", pub_key);
+  send_data(sock, resp, strlen(resp));
 }
 
 void broadcast_to_grp(int sock, int uid, char *uname)

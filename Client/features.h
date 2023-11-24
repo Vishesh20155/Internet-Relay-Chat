@@ -196,6 +196,15 @@ void show_invites(int sock)
   }
 }
 
+void encrypt_dh_1(char *key, char *content, char *ciphertext) {
+  strcpy(ciphertext, "Encrypted text");
+}
+
+void send_to(int target_uid, char *ciphertext) {
+  int target_sock_fd = target_uid;
+
+}
+
 void group_invite_accept(int sock)
 {
   receive_ACK(sock);
@@ -216,6 +225,21 @@ void group_invite_accept(int sock)
 
   receive_data(sock, resp, sizeof(resp));
   printf("\t%s\n", resp);
+}
+
+void encrypt_and_send(struct group_struct grp_details, char pub_keys[NUM_USERS][DH_PUB_KEY_LEN + 1])
+{
+  int owner_id = grp_details.users[0];
+  char cipher_text[BUFFER_SIZE];
+  for(int i=1; i<grp_details.num_members; ++i)
+  {
+    int target_uid = grp_details.users[i];
+    char *encryption_key = pub_keys[target_uid];
+    
+    memset(cipher_text, '\0', BUFFER_SIZE);
+    encrypt_dh_1(encryption_key, pub_keys[owner_id], cipher_text);
+    send_to(target_uid, cipher_text);
+  }
 }
 
 // compute_DH_key(sock, shared_secret, curr_uid, pub_keys, grp_details);
@@ -291,7 +315,7 @@ void init_group_dhxchg(int sock)
   // Call this function to send encrypted g^A
   // to all the group members for
   // Diffie Hellman process to take place
-  // encrypt_and_send(grp_details, pub_keys);
+  encrypt_and_send(grp_details, pub_keys);
 
   unsigned char shared_secret[SHARED_SECRET_LEN]; // Contains the key that will actually be used for encryption
 
@@ -430,6 +454,10 @@ void show_messages_signal_handler(int signal_number)
   {
     send_data(socket_fd, inp, strlen(inp));
     show_invites(socket_fd);
+  }
+  else if (strcmp(inp, "/request_public_key") == 0)
+  {
+    printf("Requested public key\n");
   }
   printf("--------------\n");
   printf("Command: ");

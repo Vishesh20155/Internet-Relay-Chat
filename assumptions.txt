@@ -12,3 +12,5 @@
 * No group existence checks in /write_group
 
 * init_dhxchg only once
+
+* public key only from a logged in user
