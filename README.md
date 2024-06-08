@@ -3,9 +3,10 @@
 ## System Design
 
 * Authentication Using Needham Schroedhar:
-![NS Auth](image.png)
 
-The server and the user are authenticated using the NS authentication scheme as shown in the above diagram. THey first authenticate themselves using the KDC server and then obtain a ticket to communicate with the chat server.
+ ![NS Auth](image.png)
+ 
+ The server and the user are authenticated using the NS authentication scheme as shown in the above diagram. THey first authenticate themselves using the KDC server and then obtain a ticket to communicate with the chat server.
 
 * After authentication, a client-server architecture for each of the commands maintained. All the commands perform their desired functionality.
 
